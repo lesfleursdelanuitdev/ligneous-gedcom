@@ -114,8 +114,9 @@ func (hp *HierarchicalParser) Parse(filePath string) (*gedcom.GedcomTree, error)
 			gedcomLine := gedcom.NewGedcomLine(level, tag, value, xrefID)
 			gedcomLine.LineNumber = lineNumber
 
-			// Create Record from line
-			record := gedcom.NewBaseRecord(gedcomLine)
+			// Create Record from line using factory
+			factory := gedcom.NewRecordFactory()
+			record := factory.CreateRecord(gedcomLine)
 
 			// Add to tree
 			hp.tree.AddRecord(record)
