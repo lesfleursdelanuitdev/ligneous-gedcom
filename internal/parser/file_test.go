@@ -341,7 +341,7 @@ func TestFileSize(t *testing.T) {
 		{
 			name:     "file with content",
 			content:  []byte("0 HEAD\n1 GEDC\n"),
-			wantSize: 13,
+			wantSize: int64(len([]byte("0 HEAD\n1 GEDC\n"))), // Use actual length
 			wantErr:  false,
 		},
 		{
