@@ -3,6 +3,7 @@ package parser
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -82,7 +83,7 @@ func TestValidateFile(t *testing.T) {
 					t.Errorf("ValidateFile() expected error but got none")
 					return
 				}
-				if tt.errMsg != "" && !contains(err.Error(), tt.errMsg) {
+				if tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
 					t.Errorf("ValidateFile() error = %v, want error containing %q", err, tt.errMsg)
 				}
 			} else {
@@ -112,7 +113,7 @@ func TestValidateFile_Permissions(t *testing.T) {
 	// On systems where we can't change permissions, this will pass
 	// On systems where we can, it should fail
 	if err != nil {
-		if !contains(err.Error(), "permission") && !contains(err.Error(), "readable") {
+		if !strings.Contains(err.Error(), "permission") && !strings.Contains(err.Error(), "readable") {
 			t.Logf("ValidateFile() with unreadable file returned error (expected on some systems): %v", err)
 		}
 	}
@@ -378,23 +379,5 @@ func TestFileSize(t *testing.T) {
 	if err == nil {
 		t.Errorf("FileSize() expected error for non-existent file")
 	}
-}
-
-// Helper function (same as in encoding_test.go)
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || 
-		(len(s) > len(substr) && 
-			(s[:len(substr)] == substr || 
-			 s[len(s)-len(substr):] == substr ||
-			 findSubstring(s, substr))))
-}
-
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
 
