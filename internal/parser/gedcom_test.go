@@ -106,8 +106,9 @@ func TestBasicParser_Parse_Level0Only(t *testing.T) {
 	}
 }
 
-func TestBasicParser_Parse_SkipsLevelGreaterThanZero(t *testing.T) {
+func TestBasicParser_Parse_HierarchicalStructure(t *testing.T) {
 	// Create a test file with level 0 and level > 0 records
+	// Step 1.7: Now we parse the full hierarchy
 	testContent := `0 HEAD
 1 GEDC
 2 VERS 5.5.5
@@ -134,7 +135,7 @@ func TestBasicParser_Parse_SkipsLevelGreaterThanZero(t *testing.T) {
 		t.Fatalf("Parse failed: %v", err)
 	}
 
-	// Verify only level 0 records are parsed
+	// Verify level 0 records are parsed
 	header := tree.GetHeader()
 	if header == nil {
 		t.Error("Expected HEAD record")
@@ -150,21 +151,68 @@ func TestBasicParser_Parse_SkipsLevelGreaterThanZero(t *testing.T) {
 		t.Error("Expected FAM record @F1@")
 	}
 
-	// Verify that level > 0 lines are NOT stored as children
-	// (For Step 1.5, we skip them entirely, so they shouldn't exist)
+	// Verify that level > 0 lines ARE now stored as children (Step 1.7)
 	headerLine := header.FirstLine()
 	if headerLine == nil {
 		t.Fatal("Header first line is nil")
 	}
 
-	// Check that no children were added (we skip level > 0)
-	if len(headerLine.Children) != 0 {
-		t.Errorf("Expected no children for HEAD (level > 0 should be skipped), got %d", len(headerLine.Children))
+	// HEAD should have GEDC as child
+	gedcLines := headerLine.GetLines("GEDC")
+	if len(gedcLines) != 1 {
+		t.Errorf("Expected HEAD to have 1 GEDC child, got %d", len(gedcLines))
+	} else {
+		gedcLine := gedcLines[0]
+		if gedcLine.Level != 1 {
+			t.Errorf("Expected GEDC level 1, got %d", gedcLine.Level)
+		}
+		// GEDC should have VERS as child
+		versLines := gedcLine.GetLines("VERS")
+		if len(versLines) != 1 {
+			t.Errorf("Expected GEDC to have 1 VERS child, got %d", len(versLines))
+		} else {
+			versLine := versLines[0]
+			if versLine.Level != 2 {
+				t.Errorf("Expected VERS level 2, got %d", versLine.Level)
+			}
+			if versLine.Value != "5.5.5" {
+				t.Errorf("Expected VERS value '5.5.5', got %q", versLine.Value)
+			}
+		}
 	}
 
+	// INDI should have NAME as child
 	indiLine := indi1.FirstLine()
-	if len(indiLine.Children) != 0 {
-		t.Errorf("Expected no children for INDI (level > 0 should be skipped), got %d", len(indiLine.Children))
+	nameLines := indiLine.GetLines("NAME")
+	if len(nameLines) != 1 {
+		t.Errorf("Expected INDI to have 1 NAME child, got %d", len(nameLines))
+	} else {
+		nameLine := nameLines[0]
+		if nameLine.Value != "John /Doe/" {
+			t.Errorf("Expected NAME value 'John /Doe/', got %q", nameLine.Value)
+		}
+		// NAME should have GIVN and SURN as children
+		givnLines := nameLine.GetLines("GIVN")
+		if len(givnLines) != 1 {
+			t.Errorf("Expected NAME to have 1 GIVN child, got %d", len(givnLines))
+		} else if givnLines[0].Value != "John" {
+			t.Errorf("Expected GIVN value 'John', got %q", givnLines[0].Value)
+		}
+		surnLines := nameLine.GetLines("SURN")
+		if len(surnLines) != 1 {
+			t.Errorf("Expected NAME to have 1 SURN child, got %d", len(surnLines))
+		} else if surnLines[0].Value != "Doe" {
+			t.Errorf("Expected SURN value 'Doe', got %q", surnLines[0].Value)
+		}
+	}
+
+	// FAM should have HUSB as child
+	famLine := fam1.FirstLine()
+	husbLines := famLine.GetLines("HUSB")
+	if len(husbLines) != 1 {
+		t.Errorf("Expected FAM to have 1 HUSB child, got %d", len(husbLines))
+	} else if husbLines[0].Value != "@I1@" {
+		t.Errorf("Expected HUSB value '@I1@', got %q", husbLines[0].Value)
 	}
 }
 

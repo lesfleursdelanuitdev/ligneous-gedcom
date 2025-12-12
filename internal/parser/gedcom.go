@@ -4,26 +4,30 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/yourorg/gedcom/pkg/gedcom"
 )
 
-// BasicParser is a parser that only handles level 0 records (no hierarchy yet).
-// This is Step 1.5 of the incremental development plan.
-type BasicParser struct {
-	tree *gedcom.GedcomTree
+// HierarchicalParser is a full hierarchical parser that builds complete GEDCOM tree structure.
+// This is Step 1.7 of the incremental development plan.
+type HierarchicalParser struct {
+	tree                *gedcom.GedcomTree
+	parentsStack        *LineStack
+	continuationHandler *ContinuationHandler
 }
 
-// NewBasicParser creates a new BasicParser.
-func NewBasicParser() *BasicParser {
-	return &BasicParser{
-		tree: gedcom.NewGedcomTree(),
+// NewHierarchicalParser creates a new HierarchicalParser.
+func NewHierarchicalParser() *HierarchicalParser {
+	return &HierarchicalParser{
+		tree:                gedcom.NewGedcomTree(),
+		parentsStack:        NewLineStack(),
+		continuationHandler: NewContinuationHandler(),
 	}
 }
 
-// Parse parses a GEDCOM file and extracts only level 0 records.
-// All level > 0 lines are skipped.
-func (bp *BasicParser) Parse(filePath string) (*gedcom.GedcomTree, error) {
+// Parse parses a GEDCOM file and builds the complete hierarchical tree structure.
+func (hp *HierarchicalParser) Parse(filePath string) (*gedcom.GedcomTree, error) {
 	// Step 1: Validate file
 	if err := ValidateFile(filePath); err != nil {
 		return nil, fmt.Errorf("file validation failed: %w", err)
@@ -34,7 +38,7 @@ func (bp *BasicParser) Parse(filePath string) (*gedcom.GedcomTree, error) {
 	if err != nil {
 		return nil, fmt.Errorf("encoding detection failed: %w", err)
 	}
-	bp.tree.SetEncoding(string(encoding))
+	hp.tree.SetEncoding(string(encoding))
 
 	// Step 3: Open file
 	file, err := os.Open(filePath)
@@ -49,7 +53,7 @@ func (bp *BasicParser) Parse(filePath string) (*gedcom.GedcomTree, error) {
 		return nil, fmt.Errorf("failed to create reader: %w", err)
 	}
 
-	// Step 5: Parse file line by line
+	// Step 5: Parse file line by line using stack-based algorithm
 	scanner := bufio.NewScanner(reader)
 	lineNumber := 0
 
@@ -58,6 +62,7 @@ func (bp *BasicParser) Parse(filePath string) (*gedcom.GedcomTree, error) {
 		line := scanner.Text()
 
 		// Skip empty lines
+		line = strings.TrimSpace(line)
 		if len(line) == 0 {
 			continue
 		}
@@ -66,11 +71,36 @@ func (bp *BasicParser) Parse(filePath string) (*gedcom.GedcomTree, error) {
 		level, tag, value, xrefID, err := ParseLine(line)
 		if err != nil {
 			// Log warning but continue parsing
-			// For Step 1.5, we'll just skip malformed lines
+			// TODO: Add proper error logging in Step 1.8
 			continue
 		}
 
-		// Only process level 0 records
+		// Handle CONC/CONT continuation lines
+		if tag == "CONC" || tag == "CONT" {
+			if err := hp.continuationHandler.HandleContinuation(tag, level, value); err != nil {
+				// Invalid continuation, skip it
+				// TODO: Log error in Step 1.8
+				continue
+			}
+			// Continue to next line (value is accumulated)
+			continue
+		}
+
+		// Apply accumulated CONC/CONT value to previous line
+		if hp.continuationHandler.HasAccumulatedValue() {
+			if !hp.parentsStack.IsEmpty() {
+				topLine := hp.parentsStack.Peek()
+				accumulatedValue := hp.continuationHandler.GetAccumulatedValue()
+				// Append to existing value if any
+				if topLine.Value != "" {
+					topLine.Value += accumulatedValue
+				} else {
+					topLine.Value = accumulatedValue
+				}
+			}
+		}
+
+		// Handle level 0 (top-level record)
 		if level == 0 {
 			// Create GedcomLine
 			gedcomLine := gedcom.NewGedcomLine(level, tag, value, xrefID)
@@ -80,20 +110,87 @@ func (bp *BasicParser) Parse(filePath string) (*gedcom.GedcomTree, error) {
 			record := gedcom.NewBaseRecord(gedcomLine)
 
 			// Add to tree
-			bp.tree.AddRecord(record)
+			hp.tree.AddRecord(record)
+
+			// Reset stack (new top-level record)
+			hp.parentsStack.Clear()
+			hp.parentsStack.Push(gedcomLine)
+
+			// Update last tag
+			hp.continuationHandler.SetLastTag(tag, level)
+
+			continue
 		}
-		// Skip all level > 0 lines for now
+
+		// Handle level > 0 (child lines)
+		// Find parent using stack
+		parent, err := hp.parentsStack.FindParent(level)
+		if err != nil {
+			// Orphaned line - no parent found
+			// TODO: Log warning in Step 1.8
+			// Skip this line
+			continue
+		}
+
+		// Create child line (no xref for level > 0)
+		childLine := gedcom.NewGedcomLine(level, tag, value, "")
+		childLine.LineNumber = lineNumber
+
+		// Add as child to parent
+		parent.AddChild(childLine)
+
+		// Push to stack
+		hp.parentsStack.Push(childLine)
+
+		// Update last tag
+		hp.continuationHandler.SetLastTag(tag, level)
+	}
+
+	// Handle remaining CONC/CONT value (if file ends with continuation)
+	if hp.continuationHandler.HasAccumulatedValue() {
+		if !hp.parentsStack.IsEmpty() {
+			topLine := hp.parentsStack.Peek()
+			accumulatedValue := hp.continuationHandler.GetAccumulatedValue()
+			if topLine.Value != "" {
+				topLine.Value += accumulatedValue
+			} else {
+				topLine.Value = accumulatedValue
+			}
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
 		return nil, fmt.Errorf("error reading file: %w", err)
 	}
 
-	return bp.tree, nil
+	return hp.tree, nil
+}
+
+// GetTree returns the parsed tree.
+func (hp *HierarchicalParser) GetTree() *gedcom.GedcomTree {
+	return hp.tree
+}
+
+// BasicParser is kept for backward compatibility but now uses HierarchicalParser
+// This maintains the API from Step 1.5
+type BasicParser struct {
+	parser *HierarchicalParser
+}
+
+// NewBasicParser creates a new BasicParser (now uses hierarchical parsing).
+func NewBasicParser() *BasicParser {
+	return &BasicParser{
+		parser: NewHierarchicalParser(),
+	}
+}
+
+// Parse parses a GEDCOM file using hierarchical parsing.
+func (bp *BasicParser) Parse(filePath string) (*gedcom.GedcomTree, error) {
+	return bp.parser.Parse(filePath)
 }
 
 // GetTree returns the parsed tree.
 func (bp *BasicParser) GetTree() *gedcom.GedcomTree {
-	return bp.tree
+	return bp.parser.GetTree()
 }
 
