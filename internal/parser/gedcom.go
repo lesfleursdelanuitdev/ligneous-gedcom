@@ -11,10 +11,12 @@ import (
 
 // HierarchicalParser is a full hierarchical parser that builds complete GEDCOM tree structure.
 // This is Step 1.7 of the incremental development plan.
+// Step 1.8: Added error handling and recovery.
 type HierarchicalParser struct {
 	tree                *gedcom.GedcomTree
 	parentsStack        *LineStack
 	continuationHandler *ContinuationHandler
+	errorManager        *gedcom.ErrorManager
 }
 
 // NewHierarchicalParser creates a new HierarchicalParser.
@@ -23,19 +25,23 @@ func NewHierarchicalParser() *HierarchicalParser {
 		tree:                gedcom.NewGedcomTree(),
 		parentsStack:        NewLineStack(),
 		continuationHandler: NewContinuationHandler(),
+		errorManager:        gedcom.NewErrorManager(),
 	}
 }
 
 // Parse parses a GEDCOM file and builds the complete hierarchical tree structure.
+// Returns the tree and any parsing errors (warnings don't stop parsing).
 func (hp *HierarchicalParser) Parse(filePath string) (*gedcom.GedcomTree, error) {
 	// Step 1: Validate file
 	if err := ValidateFile(filePath); err != nil {
+		hp.errorManager.AddError(gedcom.SeveritySevere, fmt.Sprintf("File validation failed: %v", err), 0, "File Validation")
 		return nil, fmt.Errorf("file validation failed: %w", err)
 	}
 
 	// Step 2: Detect encoding
 	encoding, err := DetectEncoding(filePath)
 	if err != nil {
+		hp.errorManager.AddError(gedcom.SeveritySevere, fmt.Sprintf("Encoding detection failed: %v", err), 0, "Encoding Detection")
 		return nil, fmt.Errorf("encoding detection failed: %w", err)
 	}
 	hp.tree.SetEncoding(string(encoding))
@@ -43,6 +49,7 @@ func (hp *HierarchicalParser) Parse(filePath string) (*gedcom.GedcomTree, error)
 	// Step 3: Open file
 	file, err := os.Open(filePath)
 	if err != nil {
+		hp.errorManager.AddError(gedcom.SeveritySevere, fmt.Sprintf("Failed to open file: %v", err), 0, "File I/O")
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
@@ -50,6 +57,7 @@ func (hp *HierarchicalParser) Parse(filePath string) (*gedcom.GedcomTree, error)
 	// Step 4: Get reader with proper encoding (handles BOM skipping)
 	reader, err := GetReader(file, encoding)
 	if err != nil {
+		hp.errorManager.AddError(gedcom.SeveritySevere, fmt.Sprintf("Failed to create reader: %v", err), 0, "Encoding")
 		return nil, fmt.Errorf("failed to create reader: %w", err)
 	}
 
@@ -71,7 +79,7 @@ func (hp *HierarchicalParser) Parse(filePath string) (*gedcom.GedcomTree, error)
 		level, tag, value, xrefID, err := ParseLine(line)
 		if err != nil {
 			// Log warning but continue parsing
-			// TODO: Add proper error logging in Step 1.8
+			hp.errorManager.AddError(gedcom.SeverityWarning, fmt.Sprintf("Malformed line: %v", err), lineNumber, "Line Parsing")
 			continue
 		}
 
@@ -79,7 +87,7 @@ func (hp *HierarchicalParser) Parse(filePath string) (*gedcom.GedcomTree, error)
 		if tag == "CONC" || tag == "CONT" {
 			if err := hp.continuationHandler.HandleContinuation(tag, level, value); err != nil {
 				// Invalid continuation, skip it
-				// TODO: Log error in Step 1.8
+				hp.errorManager.AddError(gedcom.SeverityWarning, fmt.Sprintf("Invalid continuation: %v", err), lineNumber, "CONC/CONT Handling")
 				continue
 			}
 			// Continue to next line (value is accumulated)
@@ -127,7 +135,7 @@ func (hp *HierarchicalParser) Parse(filePath string) (*gedcom.GedcomTree, error)
 		parent, err := hp.parentsStack.FindParent(level)
 		if err != nil {
 			// Orphaned line - no parent found
-			// TODO: Log warning in Step 1.8
+			hp.errorManager.AddError(gedcom.SeverityWarning, fmt.Sprintf("Orphaned line: %s", err.Error()), lineNumber, "Hierarchy")
 			// Skip this line
 			continue
 		}
@@ -160,10 +168,32 @@ func (hp *HierarchicalParser) Parse(filePath string) (*gedcom.GedcomTree, error)
 	}
 
 	if err := scanner.Err(); err != nil {
+		hp.errorManager.AddError(gedcom.SeveritySevere, fmt.Sprintf("Error reading file: %v", err), lineNumber, "File I/O")
 		return nil, fmt.Errorf("error reading file: %w", err)
 	}
 
+	// Return tree (errors are available via GetErrors())
 	return hp.tree, nil
+}
+
+// GetErrors returns all errors collected during parsing
+func (hp *HierarchicalParser) GetErrors() []*gedcom.GedcomError {
+	return hp.errorManager.Errors()
+}
+
+// HasErrors returns true if any errors were encountered
+func (hp *HierarchicalParser) HasErrors() bool {
+	return hp.errorManager.HasErrors()
+}
+
+// HasSevereErrors returns true if any severe errors were encountered
+func (hp *HierarchicalParser) HasSevereErrors() bool {
+	return hp.errorManager.HasSevereErrors()
+}
+
+// GetErrorManager returns the error manager (for advanced usage)
+func (hp *HierarchicalParser) GetErrorManager() *gedcom.ErrorManager {
+	return hp.errorManager
 }
 
 // GetTree returns the parsed tree.
