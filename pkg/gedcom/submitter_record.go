@@ -27,3 +27,5 @@ func (sr *SubmitterRecord) GetPhone() string {
 	return sr.GetValue("PHON")
 }
 
+
+

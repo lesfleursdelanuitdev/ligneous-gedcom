@@ -167,3 +167,18 @@ func TestErrorManager_Count(t *testing.T) {
 	}
 }
 
+func TestGedcomError_String(t *testing.T) {
+	err := &GedcomError{
+		Severity:   SeverityWarning,
+		Message:    "Test error",
+		LineNumber: 42,
+		Context:    "Test",
+	}
+
+	str := err.String()
+	if str != err.Error() {
+		t.Errorf("String() should return same as Error(), got %q vs %q", str, err.Error())
+	}
+}
+
+

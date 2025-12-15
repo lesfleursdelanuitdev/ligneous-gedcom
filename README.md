@@ -24,6 +24,14 @@ This is a complete rewrite of the GEDCOM parser in Go, designed with:
 
 This repository contains the design documents and implementation plan. The actual implementation will follow the 5-phase migration strategy outlined in the design document.
 
+## Documentation
+
+- **[Package Documentation](pkg/gedcom/doc.go)**: Core data structures and types
+- **[Parser Documentation](internal/parser/doc.go)**: Parsing functionality
+- **[Validator Documentation](internal/validator/doc.go)**: Validation rules
+- **[Exporter Documentation](internal/exporter/doc.go)**: Export formats
+- **[Usage Examples](EXAMPLES.md)**: Comprehensive code examples
+
 ## Quick Start (Once Implemented)
 
 ```go
@@ -84,4 +92,5 @@ See [GO_PORT_DESIGN.md](./GO_PORT_DESIGN.md) for the complete 5-phase migration 
 ## License
 
 [To be determined]
+
 

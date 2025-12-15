@@ -7,3 +7,5 @@ go 1.23
 //     github.com/spf13/cobra v1.8.0  // CLI
 //     github.com/stretchr/testify v1.8.4  // Testing utilities
 // )
+
+require gopkg.in/yaml.v3 v3.0.1 // indirect

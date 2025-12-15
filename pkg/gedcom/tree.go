@@ -1,21 +1,31 @@
+// Package gedcom provides core data structures for GEDCOM files.
 package gedcom
 
 import "sync"
 
 // GedcomTree represents the entire GEDCOM file structure.
-// For Step 1.5, we only store level 0 records (no hierarchy yet).
+// It serves as the root container for all parsed records and provides
+// thread-safe access to individuals, families, notes, sources, and other
+// record types.
+//
+// The tree maintains:
+//   - Separate maps for each record type (individuals, families, etc.)
+//   - A cross-reference index for fast lookups by xref ID
+//   - Metadata such as encoding and version
+//
+// All methods are thread-safe and can be called concurrently.
 type GedcomTree struct {
 	mu sync.RWMutex
 
 	// Records organized by type
-	header      Record
-	individuals map[string]Record // key: xref_id
-	families    map[string]Record
-	notes       map[string]Record
-	sources     map[string]Record
+	header       Record
+	individuals  map[string]Record // key: xref_id
+	families     map[string]Record
+	notes        map[string]Record
+	sources      map[string]Record
 	repositories map[string]Record
-	submitters  map[string]Record
-	multimedia  map[string]Record
+	submitters   map[string]Record
+	multimedia   map[string]Record
 
 	// Cross-reference index (all records by xref_id)
 	xrefIndex map[string]Record
@@ -134,6 +144,61 @@ func (gt *GedcomTree) GetAllFamilies() map[string]Record {
 	return result
 }
 
+// GetAllNotes returns all note records.
+func (gt *GedcomTree) GetAllNotes() map[string]Record {
+	gt.mu.RLock()
+	defer gt.mu.RUnlock()
+	result := make(map[string]Record)
+	for k, v := range gt.notes {
+		result[k] = v
+	}
+	return result
+}
+
+// GetAllSources returns all source records.
+func (gt *GedcomTree) GetAllSources() map[string]Record {
+	gt.mu.RLock()
+	defer gt.mu.RUnlock()
+	result := make(map[string]Record)
+	for k, v := range gt.sources {
+		result[k] = v
+	}
+	return result
+}
+
+// GetAllRepositories returns all repository records.
+func (gt *GedcomTree) GetAllRepositories() map[string]Record {
+	gt.mu.RLock()
+	defer gt.mu.RUnlock()
+	result := make(map[string]Record)
+	for k, v := range gt.repositories {
+		result[k] = v
+	}
+	return result
+}
+
+// GetAllSubmitters returns all submitter records.
+func (gt *GedcomTree) GetAllSubmitters() map[string]Record {
+	gt.mu.RLock()
+	defer gt.mu.RUnlock()
+	result := make(map[string]Record)
+	for k, v := range gt.submitters {
+		result[k] = v
+	}
+	return result
+}
+
+// GetAllMultimedia returns all multimedia records.
+func (gt *GedcomTree) GetAllMultimedia() map[string]Record {
+	gt.mu.RLock()
+	defer gt.mu.RUnlock()
+	result := make(map[string]Record)
+	for k, v := range gt.multimedia {
+		result[k] = v
+	}
+	return result
+}
+
 // GetRecordByXref returns any record by its xref ID.
 func (gt *GedcomTree) GetRecordByXref(xrefID string) Record {
 	gt.mu.RLock()
@@ -168,4 +233,3 @@ func (gt *GedcomTree) GetVersion() string {
 	defer gt.mu.RUnlock()
 	return gt.version
 }
-

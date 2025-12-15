@@ -1,5 +1,7 @@
 package gedcom
 
+import "fmt"
+
 // IndividualRecord represents an Individual (INDI) record with domain-specific methods.
 type IndividualRecord struct {
 	*BaseRecord
@@ -144,3 +146,42 @@ func (ir *IndividualRecord) GetSources() []string {
 	return ir.GetValues("SOUR")
 }
 
+// GetBirthDateParsed returns the birth date as a parsed GedcomDate.
+// Returns error if date string is empty or cannot be parsed.
+func (ir *IndividualRecord) GetBirthDateParsed() (*GedcomDate, error) {
+	dateStr := ir.GetBirthDate()
+	if dateStr == "" {
+		return nil, fmt.Errorf("no birth date found")
+	}
+	return ParseDate(dateStr)
+}
+
+// GetDeathDateParsed returns the death date as a parsed GedcomDate.
+// Returns error if date string is empty or cannot be parsed.
+func (ir *IndividualRecord) GetDeathDateParsed() (*GedcomDate, error) {
+	dateStr := ir.GetDeathDate()
+	if dateStr == "" {
+		return nil, fmt.Errorf("no death date found")
+	}
+	return ParseDate(dateStr)
+}
+
+// GetBirthPlaceParsed returns the birth place as a parsed GedcomPlace.
+// Returns error if place string is empty or cannot be parsed.
+func (ir *IndividualRecord) GetBirthPlaceParsed() (*GedcomPlace, error) {
+	placeStr := ir.GetBirthPlace()
+	if placeStr == "" {
+		return nil, fmt.Errorf("no birth place found")
+	}
+	return ParsePlace(placeStr)
+}
+
+// GetDeathPlaceParsed returns the death place as a parsed GedcomPlace.
+// Returns error if place string is empty or cannot be parsed.
+func (ir *IndividualRecord) GetDeathPlaceParsed() (*GedcomPlace, error) {
+	placeStr := ir.GetDeathPlace()
+	if placeStr == "" {
+		return nil, fmt.Errorf("no death place found")
+	}
+	return ParsePlace(placeStr)
+}

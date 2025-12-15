@@ -62,3 +62,5 @@ func (hr *HeaderRecord) GetDate() string {
 	return hr.GetValue("DATE")
 }
 
+
+

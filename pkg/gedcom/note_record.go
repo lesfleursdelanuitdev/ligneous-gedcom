@@ -17,3 +17,5 @@ func (nr *NoteRecord) GetText() string {
 	return nr.GetValue("")
 }
 
+
+

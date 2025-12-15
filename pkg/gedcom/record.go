@@ -1,6 +1,7 @@
 package gedcom
 
 // RecordType represents the type of a GEDCOM record.
+// Valid types are defined as constants below.
 type RecordType string
 
 const (

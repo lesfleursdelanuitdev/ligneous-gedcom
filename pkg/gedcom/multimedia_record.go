@@ -27,3 +27,5 @@ func (mr *MultimediaRecord) GetTitle() string {
 	return mr.GetValue("TITL")
 }
 
+
+

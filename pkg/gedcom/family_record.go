@@ -1,5 +1,7 @@
 package gedcom
 
+import "fmt"
+
 // FamilyRecord represents a Family (FAM) record with domain-specific methods.
 type FamilyRecord struct {
 	*BaseRecord
@@ -95,3 +97,42 @@ func (fr *FamilyRecord) GetSources() []string {
 	return fr.GetValues("SOUR")
 }
 
+// GetMarriageDateParsed returns the marriage date as a parsed GedcomDate.
+// Returns error if date string is empty or cannot be parsed.
+func (fr *FamilyRecord) GetMarriageDateParsed() (*GedcomDate, error) {
+	dateStr := fr.GetMarriageDate()
+	if dateStr == "" {
+		return nil, fmt.Errorf("no marriage date found")
+	}
+	return ParseDate(dateStr)
+}
+
+// GetDivorceDateParsed returns the divorce date as a parsed GedcomDate.
+// Returns error if date string is empty or cannot be parsed.
+func (fr *FamilyRecord) GetDivorceDateParsed() (*GedcomDate, error) {
+	dateStr := fr.GetDivorceDate()
+	if dateStr == "" {
+		return nil, fmt.Errorf("no divorce date found")
+	}
+	return ParseDate(dateStr)
+}
+
+// GetMarriagePlaceParsed returns the marriage place as a parsed GedcomPlace.
+// Returns error if place string is empty or cannot be parsed.
+func (fr *FamilyRecord) GetMarriagePlaceParsed() (*GedcomPlace, error) {
+	placeStr := fr.GetMarriagePlace()
+	if placeStr == "" {
+		return nil, fmt.Errorf("no marriage place found")
+	}
+	return ParsePlace(placeStr)
+}
+
+// GetDivorcePlaceParsed returns the divorce place as a parsed GedcomPlace.
+// Returns error if place string is empty or cannot be parsed.
+func (fr *FamilyRecord) GetDivorcePlaceParsed() (*GedcomPlace, error) {
+	placeStr := fr.GetDivorcePlace()
+	if placeStr == "" {
+		return nil, fmt.Errorf("no divorce place found")
+	}
+	return ParsePlace(placeStr)
+}

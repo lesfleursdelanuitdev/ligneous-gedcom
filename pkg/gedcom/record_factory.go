@@ -41,3 +41,5 @@ func (rf *RecordFactory) CreateRecord(line *GedcomLine) Record {
 	}
 }
 
+
+
