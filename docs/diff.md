@@ -2,27 +2,35 @@
 
 ## Overview
 
-The GEDCOM diff system performs semantic comparison of two GEDCOM files, identifying differences at a meaningful level rather than simple line-by-line text comparison. It understands GEDCOM structure and reports changes in terms of added/removed records, modified fields, relationship changes, and structural differences.
+The GEDCOM Diff system provides semantic comparison of GEDCOM files, identifying differences at a meaningful level rather than simple line-by-line text comparison. It understands GEDCOM structure and reports changes in terms of added/removed records, modified fields, relationship changes, and structural differences.
 
-The system also tracks change history, recording when, what, and optionally who made each change.
+The system also tracks **change history**, recording who, when, and what changed for each modification.
+
+---
 
 ## Features
 
-- **Semantic Understanding**: Understands GEDCOM structure, not just text
+### Core Capabilities
+
+- **Record-Level Comparison**: Detect added, removed, and modified records
+- **Field-Level Comparison**: Identify specific field changes (names, dates, places, etc.)
+- **Semantic Equivalence**: Understand that "1800" ≈ "ABT 1800" (within tolerance)
+- **Relationship Tracking**: Detect family structure changes
+- **Change History**: Track when and what changed with timestamps
 - **Multiple Matching Strategies**: XREF-based, content-based, or hybrid
-- **Field-Level Comparison**: Detailed field-by-field changes
-- **Semantic Equivalence**: Recognizes equivalent values (e.g., "1800" ≈ "ABT 1800")
-- **Change History Tracking**: Records timestamp, field, and values for each change
-- **Multiple Output Formats**: Text, JSON (coming soon), HTML (coming soon)
-- **Performance Optimized**: Fast comparison with indexing
+- **Multiple Output Formats**: Text reports (JSON/HTML coming soon)
+
+---
 
 ## Installation
 
-The diff system is part of the `pkg/gedcom/diff` package:
+The diff package is part of the main gedcom-go module:
 
 ```go
 import "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/diff"
 ```
+
+---
 
 ## Quick Start
 
@@ -33,7 +41,6 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
     "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/diff"
     "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
 )
@@ -41,19 +48,19 @@ import (
 func main() {
     // Parse two GEDCOM files
     p := parser.NewHierarchicalParser()
-    tree1, _ := p.Parse("family_v1.ged")
-    tree2, _ := p.Parse("family_v2.ged")
+    tree1, _ := p.Parse("file1.ged")
+    tree2, _ := p.Parse("file2.ged")
 
-    // Create differ
+    // Create differ with default configuration
     differ := diff.NewGedcomDiffer(diff.DefaultConfig())
 
-    // Compare files
+    // Compare the files
     result, err := differ.Compare(tree1, tree2)
     if err != nil {
         panic(err)
     }
 
-    // Generate report
+    // Generate text report
     report, err := differ.GenerateReport(result)
     if err != nil {
         panic(err)
@@ -63,267 +70,8 @@ func main() {
 }
 ```
 
-### Compare Specific Records
+### Example Output
 
-```go
-// Compare two individuals with same XREF
-indi1 := tree1.GetIndividual("@I1@").(*gedcom.IndividualRecord)
-indi2 := tree2.GetIndividual("@I1@").(*gedcom.IndividualRecord)
-
-// The differ will automatically detect this as a modification
-result, _ := differ.Compare(tree1, tree2)
-
-// Find modifications for @I1@
-for _, mod := range result.Changes.Modified {
-    if mod.Xref == "@I1@" {
-        fmt.Printf("Changes to @I1@:\n")
-        for _, change := range mod.Changes {
-            fmt.Printf("  %s: %v → %v\n", 
-                change.Path, change.OldValue, change.NewValue)
-        }
-    }
-}
-```
-
-## Configuration
-
-### Default Configuration
-
-```go
-config := diff.DefaultConfig()
-// Returns:
-//   MatchingStrategy: "xref"
-//   SimilarityThreshold: 0.85
-//   DateTolerance: 2
-//   IncludeUnchanged: false
-//   DetailLevel: "field"
-//   OutputFormat: "text"
-//   TrackHistory: true
-```
-
-### Custom Configuration
-
-```go
-config := &diff.DiffConfig{
-    MatchingStrategy:   "hybrid",  // "xref", "content", or "hybrid"
-    SimilarityThreshold: 0.85,     // For content matching
-    DateTolerance:      2,         // Years tolerance for date equivalence
-    IncludeUnchanged:   false,     // Include unchanged records
-    DetailLevel:        "field",   // "summary", "field", or "full"
-    OutputFormat:       "text",    // "text", "json", "html", "unified"
-    TrackHistory:       true,      // Track change history
-}
-
-differ := diff.NewGedcomDiffer(config)
-```
-
-## Matching Strategies
-
-### XREF-Based Matching (Default)
-
-Matches records by their XREF IDs. Fast and accurate for same-file versions.
-
-**Use Case:** Version comparison, same-file edits
-
-```go
-config.MatchingStrategy = "xref"
-```
-
-**Pros:**
-- Very fast (O(n) complexity)
-- Accurate for same-file versions
-- Preserves record identity
-
-**Cons:**
-- Doesn't work for cross-file comparison
-- Fails when XREFs differ
-
-### Content-Based Matching
-
-Uses duplicate detection to match records by content similarity.
-
-**Use Case:** Cross-file comparison, merge preparation
-
-```go
-config.MatchingStrategy = "content"
-```
-
-**Pros:**
-- Works across different files
-- Handles XREF mismatches
-- Finds semantic matches
-
-**Cons:**
-- Slower (requires similarity calculations)
-- May have false positives
-- Requires threshold configuration
-
-### Hybrid Matching (Recommended)
-
-Tries XREF first, falls back to content matching for unmatched records.
-
-**Use Case:** General-purpose comparison
-
-```go
-config.MatchingStrategy = "hybrid"
-```
-
-**Pros:**
-- Fast for same-file, accurate for cross-file
-- Best of both worlds
-- Configurable behavior
-
-**Cons:**
-- More complex implementation
-
-## Change Types
-
-### Added Records
-
-Records that exist in file 2 but not in file 1.
-
-```go
-for _, added := range result.Changes.Added {
-    fmt.Printf("Added: %s (%s)\n", added.Xref, added.Type)
-}
-```
-
-### Removed Records
-
-Records that exist in file 1 but not in file 2.
-
-```go
-for _, removed := range result.Changes.Removed {
-    fmt.Printf("Removed: %s (%s)\n", removed.Xref, removed.Type)
-}
-```
-
-### Modified Records
-
-Records with the same XREF but different content.
-
-```go
-for _, mod := range result.Changes.Modified {
-    fmt.Printf("Modified: %s\n", mod.Xref)
-    for _, change := range mod.Changes {
-        switch change.Type {
-        case diff.ChangeTypeModified:
-            fmt.Printf("  %s: %v → %v\n", 
-                change.Path, change.OldValue, change.NewValue)
-        case diff.ChangeTypeAdded:
-            fmt.Printf("  %s: Added (%v)\n", change.Path, change.NewValue)
-        case diff.ChangeTypeRemoved:
-            fmt.Printf("  %s: Removed (%v)\n", change.Path, change.OldValue)
-        case diff.ChangeTypeSemanticallyEquivalent:
-            fmt.Printf("  %s: %v → %v (equivalent)\n",
-                change.Path, change.OldValue, change.NewValue)
-        }
-    }
-}
-```
-
-## Field Comparison
-
-### Individual Record Fields
-
-The differ compares:
-- **Name**: Full name, given name, surname
-- **Sex**: M, F, U
-- **Birth Date**: With semantic equivalence
-- **Birth Place**: With hierarchy matching
-- **Death Date**: Added/removed/modified
-- **Death Place**: Added/removed/modified
-
-### Family Record Fields
-
-The differ compares:
-- **Husband**: XREF changes
-- **Wife**: XREF changes
-- **Children**: Added/removed children
-- **Marriage Date**: With semantic equivalence
-- **Marriage Place**: With hierarchy matching
-
-### Semantic Equivalence
-
-The differ recognizes equivalent values:
-
-**Dates:**
-```go
-"1800" ≈ "ABT 1800"        // Within tolerance
-"BEF 1850" ≈ "AFT 1840"    // Overlapping ranges
-```
-
-**Places:**
-```go
-"New York" ≈ "New York, NY"
-"New York, NY" ≈ "New York, New York, USA"
-```
-
-## Change History
-
-### Overview
-
-When `TrackHistory` is enabled, the system records:
-- **Timestamp**: When the change was detected
-- **Field**: Which field changed
-- **Old/New Values**: Previous and current values
-- **Change Type**: Added, removed, modified, or semantically equivalent
-
-### Accessing History
-
-```go
-// Global change history
-for _, entry := range result.History {
-    fmt.Printf("[%s] %s: %s\n",
-        entry.Timestamp.Format(time.RFC3339),
-        entry.ChangeType,
-        entry.Field)
-    fmt.Printf("  %s → %s\n", entry.OldValue, entry.NewValue)
-}
-
-// Record-level history
-for _, mod := range result.Changes.Modified {
-    for _, entry := range mod.History {
-        fmt.Printf("Record %s: %s\n", mod.Xref, entry.Field)
-    }
-}
-
-// Field-level history
-for _, mod := range result.Changes.Modified {
-    for _, change := range mod.Changes {
-        for _, entry := range change.History {
-            fmt.Printf("Field %s: %s\n", change.Path, entry.Field)
-        }
-    }
-}
-```
-
-### Future: Author and Reason
-
-The `ChangeHistory` structure includes fields for:
-- `Author`: Who made the change (optional)
-- `Reason`: Why the change was made (optional)
-
-These can be populated when integrating with version control or user tracking systems.
-
-## Output Formats
-
-### Text Format (Default)
-
-Human-readable text report with sections for:
-- Summary statistics
-- Added records
-- Removed records
-- Modified records with field changes
-- Change history
-- Performance statistics
-
-```go
-report, err := differ.GenerateReport(result)
-fmt.Println(report)
-```
-
-**Example Output:**
 ```
 GEDCOM Diff Report
 ==================================================
@@ -352,17 +100,283 @@ Modified Records:
     DEAT.DATE: Added (1870)
 ```
 
-### JSON Format (Coming Soon)
+---
 
-Structured JSON for programmatic processing.
+## Configuration
 
-### HTML Format (Coming Soon)
+### Default Configuration
 
-Visual HTML diff with color coding.
+```go
+config := diff.DefaultConfig()
+// MatchingStrategy: "xref"
+// SimilarityThreshold: 0.85
+// DateTolerance: 2
+// IncludeUnchanged: false
+// DetailLevel: "field"
+// OutputFormat: "text"
+// TrackHistory: true
+```
 
-### Unified Diff Format (Coming Soon)
+### Custom Configuration
 
-Git-style unified diff for version control.
+```go
+config := &diff.DiffConfig{
+    // Matching strategy
+    MatchingStrategy: "hybrid", // "xref", "content", or "hybrid"
+    
+    // Thresholds
+    SimilarityThreshold: 0.90,  // Higher threshold for stricter matching
+    DateTolerance:       1,     // Stricter date tolerance
+    
+    // Options
+    IncludeUnchanged: false,    // Don't include unchanged records
+    DetailLevel:      "full",   // "summary", "field", or "full"
+    OutputFormat:     "text",   // "text", "json", "html", "unified"
+    
+    // Change history
+    TrackHistory: true,         // Enable change history tracking
+}
+
+differ := diff.NewGedcomDiffer(config)
+```
+
+---
+
+## Matching Strategies
+
+### 1. XREF-Based Matching (Default)
+
+**Strategy:** Match records by their XREF IDs (e.g., `@I1@`).
+
+**Use Case:** Comparing two versions of the same file.
+
+**Pros:**
+- Very fast (O(n) complexity)
+- Accurate for same-file versions
+- Preserves record identity
+
+**Cons:**
+- Fails when XREFs differ between files
+- Doesn't work for cross-file comparison
+
+**Example:**
+```go
+config := &diff.DiffConfig{
+    MatchingStrategy: "xref",
+}
+```
+
+### 2. Content-Based Matching
+
+**Strategy:** Use duplicate detection to match records by content similarity.
+
+**Use Case:** Comparing different files with potentially different XREFs.
+
+**Pros:**
+- Works across different files
+- Handles XREF mismatches
+- Finds semantic matches
+
+**Cons:**
+- Slower (requires similarity calculations)
+- May have false positives
+- Requires similarity threshold configuration
+
+**Example:**
+```go
+config := &diff.DiffConfig{
+    MatchingStrategy:   "content",
+    SimilarityThreshold: 0.85,
+}
+```
+
+### 3. Hybrid Matching (Recommended)
+
+**Strategy:** Try XREF first, fallback to content matching for unmatched records.
+
+**Use Case:** General-purpose comparison.
+
+**Pros:**
+- Fast for same-file, accurate for cross-file
+- Best of both worlds
+- Configurable behavior
+
+**Cons:**
+- More complex implementation
+
+**Example:**
+```go
+config := &diff.DiffConfig{
+    MatchingStrategy: "hybrid",
+}
+```
+
+---
+
+## Change Types
+
+### 1. Added Records
+
+Records that exist in file 2 but not in file 1.
+
+```go
+for _, added := range result.Changes.Added {
+    fmt.Printf("Added: %s (%s)\n", added.Xref, added.Type)
+    fmt.Printf("  Record: %v\n", added.Record)
+}
+```
+
+### 2. Removed Records
+
+Records that exist in file 1 but not in file 2.
+
+```go
+for _, removed := range result.Changes.Removed {
+    fmt.Printf("Removed: %s (%s)\n", removed.Xref, removed.Type)
+}
+```
+
+### 3. Modified Records
+
+Records that exist in both files but have different content.
+
+```go
+for _, modified := range result.Changes.Modified {
+    fmt.Printf("Modified: %s (%s)\n", modified.Xref, modified.Type)
+    for _, change := range modified.Changes {
+        fmt.Printf("  %s: %v → %v (%s)\n",
+            change.Path,
+            change.OldValue,
+            change.NewValue,
+            change.Type)
+    }
+}
+```
+
+### 4. Field Changes
+
+Individual field changes within modified records.
+
+**Change Types:**
+- `modified`: Field value changed
+- `added`: Field added (didn't exist in file 1)
+- `removed`: Field removed (existed in file 1, not in file 2)
+- `semantically_equivalent`: Different values but same meaning
+
+**Example:**
+```go
+for _, change := range modified.Changes {
+    switch change.Type {
+    case diff.ChangeTypeModified:
+        fmt.Printf("Modified: %s\n", change.Path)
+    case diff.ChangeTypeAdded:
+        fmt.Printf("Added: %s\n", change.Path)
+    case diff.ChangeTypeRemoved:
+        fmt.Printf("Removed: %s\n", change.Path)
+    case diff.ChangeTypeSemanticallyEquivalent:
+        fmt.Printf("Equivalent: %s (no real change)\n", change.Path)
+    }
+}
+```
+
+---
+
+## Semantic Equivalence
+
+The diff system understands that different values can have the same meaning.
+
+### Date Equivalence
+
+Dates within tolerance are considered equivalent:
+
+- `"1800"` ≈ `"ABT 1800"` (within 2 years tolerance)
+- `"1800"` ≈ `"1801"` (within 1 year)
+- `"BEF 1850"` vs `"AFT 1840"` (overlapping ranges)
+
+**Configuration:**
+```go
+config := &diff.DiffConfig{
+    DateTolerance: 2, // Years tolerance
+}
+```
+
+### Place Equivalence
+
+Places with same components are considered equivalent:
+
+- `"New York"` ≈ `"New York, NY"` (hierarchy match)
+- `"New York"` ≈ `"new york"` (case-insensitive)
+- `"NY"` ≈ `"New York"` (abbreviation match)
+
+---
+
+## Change History
+
+When `TrackHistory` is enabled, the system records detailed change history.
+
+### History Structure
+
+```go
+type ChangeHistory struct {
+    Timestamp  time.Time
+    Author     string // Optional: who made the change
+    Reason     string // Optional: why the change was made
+    ChangeType ChangeType
+    Field      string // Field that changed
+    OldValue   string
+    NewValue   string
+}
+```
+
+### Accessing History
+
+**Global History:**
+```go
+for _, entry := range result.History {
+    fmt.Printf("[%s] %s: %s\n",
+        entry.Timestamp.Format(time.RFC3339),
+        entry.ChangeType,
+        entry.Field)
+}
+```
+
+**Record-Level History:**
+```go
+for _, modified := range result.Changes.Modified {
+    for _, entry := range modified.History {
+        fmt.Printf("  [%s] %s\n", entry.Timestamp, entry.Field)
+    }
+}
+```
+
+**Field-Level History:**
+```go
+for _, change := range modified.Changes {
+    for _, entry := range change.History {
+        fmt.Printf("    [%s] %s: %s → %s\n",
+            entry.Timestamp,
+            entry.Field,
+            entry.OldValue,
+            entry.NewValue)
+    }
+}
+```
+
+### Example History Output
+
+```
+Change History:
+--------------------------------------------------
+  [2025-01-27T10:30:00Z] modified: NAME
+    John /Doe/ → John /Doe Jr/
+    Author: admin
+    Reason: Corrected name
+
+  [2025-01-27T10:31:00Z] semantically_equivalent: BIRT.DATE
+    1800 → ABT 1800
+```
+
+---
 
 ## API Reference
 
@@ -380,7 +394,7 @@ type GedcomDiffer struct {
 
 #### DiffConfig
 
-Configuration for GEDCOM comparison.
+Configuration for the differ.
 
 ```go
 type DiffConfig struct {
@@ -396,7 +410,7 @@ type DiffConfig struct {
 
 #### DiffResult
 
-Contains complete diff results.
+Result of comparison operation.
 
 ```go
 type DiffResult struct {
@@ -409,7 +423,7 @@ type DiffResult struct {
 
 #### ChangeHistory
 
-Tracks individual changes.
+Individual change history entry.
 
 ```go
 type ChangeHistory struct {
@@ -423,7 +437,7 @@ type ChangeHistory struct {
 }
 ```
 
-### Methods
+### Functions
 
 #### NewGedcomDiffer
 
@@ -433,12 +447,27 @@ Creates a new GEDCOM differ.
 func NewGedcomDiffer(config *DiffConfig) *GedcomDiffer
 ```
 
+#### DefaultConfig
+
+Returns default configuration.
+
+```go
+func DefaultConfig() *DiffConfig
+```
+
+### Methods
+
 #### Compare
 
 Compares two GEDCOM trees.
 
 ```go
 func (gd *GedcomDiffer) Compare(tree1, tree2 *gedcom.GedcomTree) (*DiffResult, error)
+```
+
+**Example:**
+```go
+result, err := differ.Compare(tree1, tree2)
 ```
 
 #### CompareFiles
@@ -457,89 +486,78 @@ Generates a text report from diff results.
 func (gd *GedcomDiffer) GenerateReport(result *DiffResult) (string, error)
 ```
 
+**Example:**
+```go
+report, err := differ.GenerateReport(result)
+fmt.Println(report)
+```
+
+---
+
 ## Examples
 
-### Example 1: Basic Comparison
+### Example 1: Version Comparison
+
+Compare two versions of the same file:
 
 ```go
-differ := diff.NewGedcomDiffer(diff.DefaultConfig())
-result, _ := differ.Compare(tree1, tree2)
+// Parse both versions
+p := parser.NewHierarchicalParser()
+v1, _ := p.Parse("family_v1.ged")
+v2, _ := p.Parse("family_v2.ged")
 
-fmt.Printf("Summary:\n")
-fmt.Printf("  Added: %d\n", len(result.Changes.Added))
-fmt.Printf("  Removed: %d\n", len(result.Changes.Removed))
-fmt.Printf("  Modified: %d\n", len(result.Changes.Modified))
-```
-
-### Example 2: Detailed Field Changes
-
-```go
-result, _ := differ.Compare(tree1, tree2)
-
-for _, mod := range result.Changes.Modified {
-    fmt.Printf("Record %s changes:\n", mod.Xref)
-    for _, change := range mod.Changes {
-        fmt.Printf("  %s: %v → %v (%s)\n",
-            change.Path,
-            change.OldValue,
-            change.NewValue,
-            change.Type)
-    }
-}
-```
-
-### Example 3: Change History
-
-```go
+// Compare with XREF matching (fast for same file)
 config := diff.DefaultConfig()
-config.TrackHistory = true
+config.MatchingStrategy = "xref"
 differ := diff.NewGedcomDiffer(config)
 
-result, _ := differ.Compare(tree1, tree2)
+result, _ := differ.Compare(v1, v2)
 
-// Print change history
-for _, entry := range result.History {
-    fmt.Printf("[%s] %s changed: %s\n",
-        entry.Timestamp.Format("2006-01-02 15:04:05"),
-        entry.Field,
-        entry.ChangeType)
-    fmt.Printf("  %s → %s\n", entry.OldValue, entry.NewValue)
-}
+// Print summary
+fmt.Printf("Added: %d, Removed: %d, Modified: %d\n",
+    len(result.Changes.Added),
+    len(result.Changes.Removed),
+    len(result.Changes.Modified))
 ```
 
-### Example 4: Filter Changes
+### Example 2: Cross-File Comparison
+
+Compare two different files:
+
+```go
+// Parse both files
+p := parser.NewHierarchicalParser()
+file1, _ := p.Parse("smith_family.ged")
+file2, _ := p.Parse("jones_family.ged")
+
+// Compare with content matching
+config := &diff.DiffConfig{
+    MatchingStrategy:   "content",
+    SimilarityThreshold: 0.85,
+    DateTolerance:      2,
+    TrackHistory:       true,
+}
+differ := diff.NewGedcomDiffer(config)
+
+result, _ := differ.Compare(file1, file2)
+
+// Generate detailed report
+report, _ := differ.GenerateReport(result)
+fmt.Println(report)
+```
+
+### Example 3: Track Specific Changes
+
+Find all name changes:
 
 ```go
 result, _ := differ.Compare(tree1, tree2)
 
-// Only show added records
-for _, added := range result.Changes.Added {
-    if added.Type == "INDI" {
-        fmt.Printf("New individual: %s\n", added.Xref)
-    }
-}
-
-// Only show modified names
-for _, mod := range result.Changes.Modified {
-    for _, change := range mod.Changes {
+for _, modified := range result.Changes.Modified {
+    for _, change := range modified.Changes {
         if change.Field == "NAME" {
-            fmt.Printf("Name changed: %s\n", mod.Xref)
-        }
-    }
-}
-```
-
-### Example 5: Semantic Equivalence
-
-```go
-result, _ := differ.Compare(tree1, tree2)
-
-// Find semantically equivalent changes
-for _, mod := range result.Changes.Modified {
-    for _, change := range mod.Changes {
-        if change.Type == diff.ChangeTypeSemanticallyEquivalent {
-            fmt.Printf("%s: %v ≈ %v (equivalent)\n",
-                change.Path,
+            fmt.Printf("Name changed in %s: %v → %v\n",
+                modified.Xref,
                 change.OldValue,
                 change.NewValue)
         }
@@ -547,131 +565,154 @@ for _, mod := range result.Changes.Modified {
 }
 ```
 
-## Performance
+### Example 4: Change History Analysis
 
-### Optimization Features
+Analyze when changes were made:
 
-1. **Indexing**: Fast XREF lookup (O(1))
-2. **Pre-filtering**: Reduces comparison space
-3. **Early Termination**: Skips identical records
+```go
+result, _ := differ.Compare(tree1, tree2)
 
-### Expected Performance
+// Group changes by timestamp
+changesByDate := make(map[string][]ChangeHistory)
+for _, entry := range result.History {
+    date := entry.Timestamp.Format("2006-01-02")
+    changesByDate[date] = append(changesByDate[date], entry)
+}
 
-| File Size | Comparison Time (XREF) | Comparison Time (Content) |
-|-----------|------------------------|---------------------------|
-| 100 records | < 1 second | ~5 seconds |
-| 1,000 records | ~1 second | ~1 minute |
-| 10,000 records | ~5 seconds | ~10 minutes |
+// Print changes by date
+for date, changes := range changesByDate {
+    fmt.Printf("%s: %d changes\n", date, len(changes))
+}
+```
 
-**Note:** Content-based comparison is slower due to similarity calculations.
+---
 
 ## Best Practices
 
-### 1. Choose Appropriate Matching Strategy
+### 1. Choose the Right Matching Strategy
 
-- **Same-file versions**: Use "xref" (fastest)
-- **Cross-file comparison**: Use "content" or "hybrid"
-- **General use**: Use "hybrid" (balanced)
+- **Same file versions**: Use `"xref"` (fastest)
+- **Different files**: Use `"content"` or `"hybrid"` (more accurate)
+- **General use**: Use `"hybrid"` (balanced)
 
-### 2. Enable Change History
+### 2. Configure Date Tolerance
+
+Adjust based on your data quality:
+
+- **High quality data**: `DateTolerance: 1` (stricter)
+- **Normal data**: `DateTolerance: 2` (default)
+- **Low quality data**: `DateTolerance: 5` (more lenient)
+
+### 3. Enable Change History
+
+Always enable history tracking for audit trails:
 
 ```go
 config.TrackHistory = true
 ```
 
-Provides audit trail and detailed change tracking.
+### 4. Use Appropriate Detail Level
 
-### 3. Use Semantic Equivalence
+- **Quick overview**: `DetailLevel: "summary"`
+- **Standard review**: `DetailLevel: "field"` (default)
+- **Deep analysis**: `DetailLevel: "full"`
 
-The system automatically detects equivalent values:
-- Dates within tolerance
-- Places with hierarchy matching
+### 5. Handle Large Files
 
-No additional configuration needed.
+For very large files (>10,000 records):
 
-### 4. Review Summary First
+- Use XREF matching when possible (faster)
+- Consider limiting comparison scope
+- Process in batches if needed
 
-```go
-summary := result.Summary
-fmt.Printf("Changes: %d added, %d removed, %d modified\n",
-    len(result.Changes.Added),
-    len(result.Changes.Removed),
-    len(result.Changes.Modified))
-```
+---
 
-### 5. Check Statistics
+## Performance
 
-```go
-fmt.Printf("Processing time: %v\n", result.Statistics.ProcessingTime)
-fmt.Printf("Records compared: %d\n", result.Statistics.RecordsCompared)
-```
+### Expected Performance
+
+| File Size | XREF Strategy | Content Strategy | Hybrid Strategy |
+|-----------|---------------|------------------|-----------------|
+| 100 records | < 1 second | ~5 seconds | ~1 second |
+| 1,000 records | ~1 second | ~1 minute | ~5 seconds |
+| 10,000 records | ~5 seconds | ~10 minutes | ~30 seconds |
+
+### Optimization Tips
+
+1. **Use XREF when possible**: 10-100x faster than content matching
+2. **Disable history for large files**: Reduces memory usage
+3. **Use summary level**: Faster report generation
+4. **Compare incrementally**: Only compare changed sections
+
+---
 
 ## Troubleshooting
 
-### No Differences Found
+### Issue: Too Many "Modified" Records
 
-**Possible causes:**
-- Files are identical
-- Matching strategy too strict
-- XREF mismatches (use content matching)
+**Problem:** Many records marked as modified when they should be unchanged.
 
-**Solutions:**
-- Verify files are different
-- Use "content" or "hybrid" strategy
-- Check XREF consistency
+**Solution:**
+- Increase `DateTolerance` for date comparisons
+- Check if semantic equivalence is working correctly
+- Verify that field comparison logic is appropriate
 
-### Too Many Differences
+### Issue: Missing Matches
 
-**Possible causes:**
-- Files are completely different
-- Semantic equivalence not working
-- Date tolerance too strict
+**Problem:** Records that should match aren't being matched.
 
-**Solutions:**
-- Verify you're comparing correct files
-- Increase `DateTolerance`
-- Check semantic equivalence settings
+**Solution:**
+- Use `"hybrid"` or `"content"` strategy instead of `"xref"`
+- Lower `SimilarityThreshold` for content matching
+- Check XREF consistency between files
 
-### Slow Performance
+### Issue: Slow Performance
 
-**Possible causes:**
-- Very large files
-- Content-based matching
-- No indexing
+**Problem:** Comparison takes too long.
 
-**Solutions:**
-- Use "xref" strategy if possible
-- Compare smaller subsets
-- Wait for parallel processing (coming soon)
+**Solution:**
+- Use `"xref"` strategy when possible
+- Disable `TrackHistory` for large files
+- Use `DetailLevel: "summary"` for faster processing
 
-## Integration
+### Issue: Incorrect Semantic Equivalence
 
-### With Duplicate Detection
+**Problem:** Dates/places marked as equivalent when they shouldn't be.
 
-The diff system can use duplicate detection for content matching:
+**Solution:**
+- Adjust `DateTolerance` to be more strict
+- Review place comparison logic
+- Check date parsing accuracy
 
-```go
-config.MatchingStrategy = "content"
-// Automatically uses duplicate detection internally
-```
+---
 
-### With Query API
+## Future Enhancements
 
-```go
-// Future integration
-q.Diff(tree1, tree2).Strategy("hybrid").Execute()
-```
+### Planned Features
 
-### With CLI
+- **JSON Output**: Structured JSON format for programmatic processing
+- **HTML Output**: Visual HTML diff with color coding
+- **Unified Diff**: Git-style unified diff format
+- **Three-Way Merge**: Compare base + two versions
+- **Parallel Processing**: Faster comparison for large files
+- **Incremental Diff**: Compare only changed sections
+- **Author Tracking**: Track who made each change
+- **Change Reasons**: Optional reason field for changes
 
-```bash
-# Future CLI command
-gedcom diff file1.ged file2.ged --format json -o diff.json
-```
+---
 
-## See Also
+## Related Documentation
 
-- [GEDCOM Diff Design](GEDCOM_DIFF_DESIGN.md) - Detailed design document
-- [Duplicate Detection Documentation](duplicate-detection.md) - Duplicate detection system
-- [Query API Documentation](query-api.md) - Graph-based querying
-- [Types Documentation](types.md) - Core GEDCOM types
+- [Duplicate Detection Documentation](duplicate-detection.md) - Find potential duplicate individuals
+- [Query API Documentation](query-api.md) - Graph-based query API
+- [Types Documentation](types.md) - Core GEDCOM data types
+
+---
+
+## Examples Repository
+
+For more examples, see the [examples directory](../examples/) in the repository.
+
+---
+
+**Last Updated:** 2025-01-27

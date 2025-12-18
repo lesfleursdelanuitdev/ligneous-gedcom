@@ -2,25 +2,35 @@
 
 ## Overview
 
-The duplicate detection system identifies potential duplicate individuals within a single GEDCOM file or across multiple files. It uses weighted similarity scoring based on names, dates, places, sex, and relationships to determine the likelihood that two records represent the same person.
+The Duplicate Detection system identifies potential duplicate individuals across GEDCOM files, providing similarity scores and configurable thresholds to identify records that might represent the same person. The system uses weighted similarity scoring based on names, dates, places, sex, and relationships.
+
+---
 
 ## Features
 
-- **Weighted Similarity Scoring**: Combines multiple metrics (name, date, place, sex, relationships)
+### Core Capabilities
+
+- **Single-File Detection**: Find duplicates within one GEDCOM file
+- **Cross-File Detection**: Compare individuals across two different files
+- **Single Individual Matching**: Find matches for a specific individual
+- **Weighted Similarity Scoring**: Configurable weights for different metrics
+- **Confidence Levels**: Categorize matches (exact, high, medium, low)
 - **Phonetic Matching**: Soundex algorithm for name variations
-- **Semantic Date Comparison**: Handles imprecise dates (ABT, BEF, AFT, BETWEEN)
-- **Relationship Matching**: Uses family relationships (parents, spouses, children)
-- **Parallel Processing**: Multi-threaded comparison for large files
-- **Performance Optimizations**: Indexing, pre-filtering, memory pooling
-- **Configurable Thresholds**: Adjustable sensitivity levels
+- **Relationship Matching**: Use family relationships for better accuracy
+- **Parallel Processing**: Fast comparison for large datasets
+- **Performance Metrics**: Track processing time and throughput
+
+---
 
 ## Installation
 
-The duplicate detection system is part of the `pkg/gedcom/duplicate` package:
+The duplicate detection package is part of the main gedcom-go module:
 
 ```go
 import "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/duplicate"
 ```
+
+---
 
 ## Quick Start
 
@@ -31,7 +41,6 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
     "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/duplicate"
     "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
 )
@@ -39,12 +48,9 @@ import (
 func main() {
     // Parse GEDCOM file
     p := parser.NewHierarchicalParser()
-    tree, err := p.Parse("family.ged")
-    if err != nil {
-        panic(err)
-    }
+    tree, _ := p.Parse("family.ged")
 
-    // Create duplicate detector
+    // Create detector with default configuration
     detector := duplicate.NewDuplicateDetector(duplicate.DefaultConfig())
 
     // Find duplicates
@@ -60,31 +66,21 @@ func main() {
             match.Individual2.XrefID())
         fmt.Printf("  Similarity: %.2f%%\n", match.SimilarityScore*100)
         fmt.Printf("  Confidence: %s\n", match.Confidence)
-        fmt.Printf("  Matching fields: %v\n", match.MatchingFields)
     }
 }
 ```
 
-### Cross-File Comparison
+### Example Output
 
-```go
-// Parse two files
-tree1, _ := p.Parse("file1.ged")
-tree2, _ := p.Parse("file2.ged")
-
-// Find duplicates between files
-result, err := detector.FindDuplicatesBetween(tree1, tree2)
+```
+Potential duplicate: @I1@ and @I5@
+  Similarity: 92.50%
+  Confidence: high
+  Matching fields: name, birth_date, birth_place, sex
+  Differences: death_date
 ```
 
-### Find Matches for Specific Individual
-
-```go
-// Get an individual
-individual := tree.GetIndividual("@I1@").(*gedcom.IndividualRecord)
-
-// Find potential matches
-matches, err := detector.FindMatches(individual, tree)
-```
+---
 
 ## Configuration
 
@@ -92,19 +88,18 @@ matches, err := detector.FindMatches(individual, tree)
 
 ```go
 config := duplicate.DefaultConfig()
-// Returns:
-//   MinThreshold: 0.60
-//   HighConfidenceThreshold: 0.85
-//   ExactMatchThreshold: 0.95
-//   NameWeight: 0.40
-//   DateWeight: 0.30
-//   PlaceWeight: 0.15
-//   SexWeight: 0.05
-//   RelationshipWeight: 0.10
-//   UsePhoneticMatching: true
-//   UseRelationshipData: true
-//   UseParallelProcessing: true
-//   DateTolerance: 2
+// MinThreshold: 0.60
+// HighConfidenceThreshold: 0.85
+// ExactMatchThreshold: 0.95
+// NameWeight: 0.40
+// DateWeight: 0.30
+// PlaceWeight: 0.15
+// SexWeight: 0.05
+// RelationshipWeight: 0.10
+// UsePhoneticMatching: true
+// UseRelationshipData: true
+// UseParallelProcessing: true
+// DateTolerance: 2
 ```
 
 ### Custom Configuration
@@ -112,23 +107,23 @@ config := duplicate.DefaultConfig()
 ```go
 config := &duplicate.DuplicateConfig{
     // Thresholds
-    MinThreshold:          0.70,  // Minimum similarity to report
-    HighConfidenceThreshold: 0.85,  // High confidence threshold
-    ExactMatchThreshold:   0.95,  // Exact match threshold
-
+    MinThreshold:           0.70,  // Minimum similarity to report
+    HighConfidenceThreshold: 0.90,  // High confidence threshold
+    ExactMatchThreshold:    0.98,  // Exact match threshold
+    
     // Weights
-    NameWeight:        0.40,  // Name similarity weight
-    DateWeight:        0.30,  // Date similarity weight
-    PlaceWeight:       0.15,  // Place similarity weight
-    SexWeight:         0.05,  // Sex match weight
-    RelationshipWeight: 0.10,  // Relationship weight
-
+    NameWeight:        0.50,  // Higher weight on names
+    DateWeight:        0.30,
+    PlaceWeight:       0.15,
+    SexWeight:         0.05,
+    RelationshipWeight: 0.00,  // Disable relationship matching
+    
     // Options
     UsePhoneticMatching:    true,  // Enable Soundex matching
-    UseRelationshipData:   true,  // Use family relationships
-    UseParallelProcessing: true,  // Enable parallel processing
-    DateTolerance:         2,     // Years tolerance for dates
-    NumWorkers:            0,     // Auto-detect worker count
+    UseRelationshipData:    false, // Disable relationship matching
+    UseParallelProcessing:  true,  // Enable parallel processing
+    DateTolerance:         2,     // Years tolerance
+    NumWorkers:            8,     // Manual worker count (0 = auto)
 }
 
 detector := duplicate.NewDuplicateDetector(config)
@@ -145,9 +140,8 @@ config := &duplicate.DuplicateConfig{
     ExactMatchThreshold:   0.98,
     NameWeight:            0.50,
     DateWeight:            0.30,
-    PlaceWeight:           0.15,
     UseRelationshipData:   true,
-    DateTolerance:         1,  // Stricter
+    DateTolerance:         1,
 }
 ```
 
@@ -159,95 +153,167 @@ config := &duplicate.DuplicateConfig{
     HighConfidenceThreshold: 0.75,
     ExactMatchThreshold:   0.90,
     NameWeight:            0.35,
-    DateWeight:            0.30,
     PlaceWeight:           0.20,
     UseRelationshipData:   false,
-    DateTolerance:         5,  // More lenient
+    DateTolerance:         5,
 }
 ```
 
+---
+
 ## Similarity Metrics
 
-### Name Similarity (40% weight)
+### 1. Name Similarity (40% weight)
 
-The name similarity algorithm uses multiple strategies:
-
-1. **Exact Match**: Identical normalized names
-2. **Normalized Match**: Same name after normalization (removes slashes, case)
-3. **Component Match**: Compares given name and surname separately
-4. **Phonetic Match**: Soundex algorithm for similar-sounding names
-5. **Fuzzy Match**: Levenshtein distance for typos and variations
-
-**Example:**
-```go
-// These would match with high similarity:
-"John /Doe/" vs "John Doe"           // Normalized match
-"Smith" vs "Smyth"                   // Phonetic match
-"John" vs "Jon"                      // Fuzzy match
-```
-
-### Date Similarity (30% weight)
-
-Date comparison handles:
-- Exact year matches
-- Year differences with tolerance
-- Imprecise dates (ABT, BEF, AFT, BETWEEN)
-- Date range overlap calculation
+**Algorithms:**
+- Exact match
+- Normalized match (removes slashes, case-insensitive)
+- Component match (given name + surname separately)
+- Phonetic match (Soundex algorithm)
+- Fuzzy match (Levenshtein distance)
 
 **Scoring:**
 - Exact match: 1.0
-- Within 1 year: 0.9
-- Within 2 years: 0.8
-- Within 5 years: 0.7
-- Within 10 years: 0.5
+- Phonetic match: 0.8-0.9
+- Fuzzy match: 0.4-0.7
+- Partial match: 0.6-0.8
 
 **Example:**
 ```go
-// These would be semantically equivalent:
-"1800" vs "ABT 1800"     // Within tolerance
-"BEF 1850" vs "AFT 1840" // Overlapping ranges
+// "Smith" and "Smyth" will match phonetically
+// "John" and "Jon" will match with fuzzy matching
 ```
 
-### Place Similarity (15% weight)
+### 2. Date Similarity (30% weight)
 
-Place comparison supports:
-- Exact place matches
+**Algorithms:**
+- Exact year match
+- Year difference calculation
+- Date range overlap (for ABT, BEF, AFT dates)
+- Tolerance-based matching
+
+**Scoring:**
+- Exact match: 1.0
+- Same year: 0.9
+- Within 1 year: 0.8
+- Within 2 years: 0.7
+- Within 5 years: 0.5
+- Within 10 years: 0.3
+
+**Example:**
+```go
+// "1800" and "ABT 1800" will match (within tolerance)
+// "1800" and "1801" will have high similarity (0.9)
+```
+
+### 3. Place Similarity (15% weight)
+
+**Algorithms:**
+- Exact match
 - Component matching (city, state, country)
 - Hierarchy matching
 - Abbreviation handling
 
+**Scoring:**
+- Exact match: 1.0
+- Same city + state: 0.9
+- Same city: 0.7
+- Same state/country: 0.5
+
 **Example:**
 ```go
-// These would match:
-"New York" vs "New York, NY"
-"New York, NY" vs "New York, New York, USA"
+// "New York" and "New York, NY" will match
+// "NY" and "New York" will match (abbreviation)
 ```
 
-### Sex Match (5% weight)
+### 4. Sex Match (5% weight)
 
+**Scoring:**
 - Match: 1.0
 - Mismatch: 0.0 (strong negative indicator)
 - Unknown (U): 0.5 (neutral)
 
-### Relationship Similarity (10% weight)
+### 5. Relationship Similarity (10% weight)
 
-Uses family relationships:
-- Common parents: +0.2 bonus
-- Common spouse: +0.2 bonus
+**Components:**
+- Common parents (FAMC)
+- Common spouses (FAMS)
+- Common children
+
+**Scoring:**
+- Same parents: +0.2 bonus
+- Same spouse: +0.2 bonus
 - Common children: +0.1 per child (max +0.3)
 
-**Note:** Requires `SetTree()` to be called for relationship matching.
+**Note:** Requires graph structure (tree must be set).
+
+---
+
+## Similarity Score Calculation
+
+### Weighted Sum Formula
+
+```
+Total Score = (Name × 0.40) + (Date × 0.30) + (Place × 0.15) + 
+              (Sex × 0.05) + (Relationships × 0.10)
+```
+
+### Example Calculation
+
+```
+Individual 1: John /Doe/, b. 1800, New York, M
+Individual 2: John /Doe/, b. 1800, New York, M
+
+Name: 1.0 × 0.40 = 0.40
+Date: 1.0 × 0.30 = 0.30
+Place: 1.0 × 0.15 = 0.15
+Sex: 1.0 × 0.05 = 0.05
+Relationships: 0.0 × 0.10 = 0.00
+────────────────────────────
+Total: 0.90 (90% similarity)
+```
+
+### Missing Data Handling
+
+Missing fields don't reduce the score - they simply contribute 0.0 to that component:
+
+```
+Individual 1: John /Doe/, b. 1800, New York, M
+Individual 2: John /Doe/, b. 1800, [no place], M
+
+Name: 1.0 × 0.40 = 0.40
+Date: 1.0 × 0.30 = 0.30
+Place: 0.0 × 0.15 = 0.00 (missing)
+Sex: 1.0 × 0.05 = 0.05
+────────────────────────────
+Total: 0.75 (75% similarity)
+```
+
+---
 
 ## Confidence Levels
 
-The system categorizes matches by confidence:
+### Threshold Levels
 
-| Level | Score Range | Meaning | Action |
-|-------|-------------|---------|--------|
-| **Exact** | 0.95 - 1.0 | Almost certainly the same | Auto-merge candidate |
-| **High** | 0.85 - 0.94 | Very likely the same | Manual review recommended |
-| **Medium** | 0.70 - 0.84 | Possibly the same | Manual review required |
-| **Low** | 0.60 - 0.69 | Unlikely but possible | Review if other indicators |
+| Confidence | Score Range | Meaning | Action |
+|------------|-------------|---------|--------|
+| **Exact Match** | 0.95 - 1.0 | Almost certainly the same | Auto-merge candidate |
+| **High Confidence** | 0.85 - 0.94 | Very likely the same | Manual review recommended |
+| **Medium Confidence** | 0.70 - 0.84 | Possibly the same | Manual review required |
+| **Low Confidence** | 0.60 - 0.69 | Unlikely but possible | Review if other indicators |
+| **No Match** | 0.0 - 0.59 | Different people | Ignore |
+
+### Configurable Thresholds
+
+```go
+config := &duplicate.DuplicateConfig{
+    MinThreshold:          0.70,  // Minimum to report
+    HighConfidenceThreshold: 0.85,  // High confidence
+    ExactMatchThreshold:   0.95,  // Exact match
+}
+```
+
+---
 
 ## API Reference
 
@@ -255,7 +321,7 @@ The system categorizes matches by confidence:
 
 #### DuplicateDetector
 
-Main detector struct for finding duplicates.
+Main detector for finding duplicate individuals.
 
 ```go
 type DuplicateDetector struct {
@@ -270,34 +336,29 @@ Configuration for duplicate detection.
 
 ```go
 type DuplicateConfig struct {
-    // Thresholds
     MinThreshold            float64
     HighConfidenceThreshold float64
     ExactMatchThreshold     float64
-
-    // Weights
-    NameWeight         float64
-    DateWeight         float64
-    PlaceWeight        float64
-    SexWeight          float64
-    RelationshipWeight float64
-
-    // Options
-    UsePhoneticMatching   bool
-    UseRelationshipData   bool
-    UseParallelProcessing bool
-    DateTolerance         int
-    NumWorkers            int
+    NameWeight              float64
+    DateWeight              float64
+    PlaceWeight             float64
+    SexWeight               float64
+    RelationshipWeight      float64
+    UsePhoneticMatching     bool
+    UseRelationshipData     bool
+    UseParallelProcessing   bool
+    DateTolerance           int
+    NumWorkers              int
 }
 ```
 
 #### DuplicateMatch
 
-Represents a potential duplicate match.
+A potential duplicate match between two individuals.
 
 ```go
 type DuplicateMatch struct {
-    Individual1      *gedcom.IndividualRecord
+    Individual1       *gedcom.IndividualRecord
     Individual2      *gedcom.IndividualRecord
     SimilarityScore  float64
     Confidence       string
@@ -313,7 +374,7 @@ type DuplicateMatch struct {
 
 #### DuplicateResult
 
-Contains all duplicate detection results.
+Result of duplicate detection operation.
 
 ```go
 type DuplicateResult struct {
@@ -324,7 +385,7 @@ type DuplicateResult struct {
 }
 ```
 
-### Methods
+### Functions
 
 #### NewDuplicateDetector
 
@@ -334,12 +395,27 @@ Creates a new duplicate detector.
 func NewDuplicateDetector(config *DuplicateConfig) *DuplicateDetector
 ```
 
+#### DefaultConfig
+
+Returns default configuration.
+
+```go
+func DefaultConfig() *DuplicateConfig
+```
+
+### Methods
+
 #### FindDuplicates
 
 Finds duplicates within a single GEDCOM tree.
 
 ```go
 func (dd *DuplicateDetector) FindDuplicates(tree *gedcom.GedcomTree) (*DuplicateResult, error)
+```
+
+**Example:**
+```go
+result, err := detector.FindDuplicates(tree)
 ```
 
 #### FindDuplicatesBetween
@@ -350,20 +426,35 @@ Finds duplicates between two GEDCOM trees.
 func (dd *DuplicateDetector) FindDuplicatesBetween(tree1, tree2 *gedcom.GedcomTree) (*DuplicateResult, error)
 ```
 
+**Example:**
+```go
+result, err := detector.FindDuplicatesBetween(tree1, tree2)
+```
+
 #### FindMatches
 
-Finds potential matches for a specific individual.
+Finds matches for a specific individual.
 
 ```go
 func (dd *DuplicateDetector) FindMatches(individual *gedcom.IndividualRecord, tree *gedcom.GedcomTree) ([]DuplicateMatch, error)
 ```
 
+**Example:**
+```go
+matches, err := detector.FindMatches(individual, tree)
+```
+
 #### Compare
 
-Compares two individuals directly and returns similarity score.
+Compares two individuals directly.
 
 ```go
 func (dd *DuplicateDetector) Compare(indi1, indi2 *gedcom.IndividualRecord) (float64, error)
+```
+
+**Example:**
+```go
+score, err := detector.Compare(indi1, indi2)
 ```
 
 #### SetTree
@@ -374,22 +465,30 @@ Sets the GEDCOM tree for relationship matching.
 func (dd *DuplicateDetector) SetTree(tree *gedcom.GedcomTree)
 ```
 
+**Note:** Required for relationship similarity calculations.
+
+---
+
 ## Examples
 
-### Example 1: Find All Duplicates
+### Example 1: Find Duplicates in Single File
 
 ```go
+// Parse file
+p := parser.NewHierarchicalParser()
+tree, _ := p.Parse("family.ged")
+
+// Create detector
 detector := duplicate.NewDuplicateDetector(duplicate.DefaultConfig())
-result, err := detector.FindDuplicates(tree)
 
+// Find duplicates
+result, _ := detector.FindDuplicates(tree)
+
+// Process results
 fmt.Printf("Found %d potential duplicates\n", len(result.Matches))
-fmt.Printf("Compared %d pairs in %v\n", 
-    result.TotalComparisons, 
-    result.ProcessingTime)
-
 for _, match := range result.Matches {
-    if match.Confidence == "exact" || match.Confidence == "high" {
-        fmt.Printf("High confidence match: %s ↔ %s (%.2f%%)\n",
+    if match.Confidence == "high" || match.Confidence == "exact" {
+        fmt.Printf("High confidence match: %s and %s (%.2f%%)\n",
             match.Individual1.XrefID(),
             match.Individual2.XrefID(),
             match.SimilarityScore*100)
@@ -397,51 +496,65 @@ for _, match := range result.Matches {
 }
 ```
 
-### Example 2: Filter by Confidence
+### Example 2: Cross-File Comparison
 
 ```go
-result, _ := detector.FindDuplicates(tree)
+// Parse both files
+p := parser.NewHierarchicalParser()
+tree1, _ := p.Parse("file1.ged")
+tree2, _ := p.Parse("file2.ged")
 
-// Get only high-confidence matches
-highConfidence := []duplicate.DuplicateMatch{}
-for _, match := range result.Matches {
-    if match.Confidence == "exact" || match.Confidence == "high" {
-        highConfidence = append(highConfidence, match)
-    }
-}
-
-fmt.Printf("Found %d high-confidence duplicates\n", len(highConfidence))
-```
-
-### Example 3: Compare Two Files
-
-```go
-tree1, _ := parser.Parse("file1.ged")
-tree2, _ := parser.Parse("file2.ged")
-
+// Create detector
 detector := duplicate.NewDuplicateDetector(duplicate.DefaultConfig())
+
+// Find duplicates between files
 result, _ := detector.FindDuplicatesBetween(tree1, tree2)
 
+// Process matches
 for _, match := range result.Matches {
     fmt.Printf("Match: %s (file1) ↔ %s (file2)\n",
         match.Individual1.XrefID(),
         match.Individual2.XrefID())
+    fmt.Printf("  Similarity: %.2f%%, Confidence: %s\n",
+        match.SimilarityScore*100,
+        match.Confidence)
 }
 ```
 
-### Example 4: Custom Configuration
+### Example 3: Find Matches for Specific Individual
 
 ```go
-config := &duplicate.DuplicateConfig{
-    MinThreshold:          0.80,  // Only high-confidence matches
-    UsePhoneticMatching:   true,
-    UseRelationshipData:   true,
-    DateTolerance:         1,     // Stricter date matching
-    NumWorkers:            8,     // Use 8 workers
-}
+// Get individual
+individual := tree.GetIndividual("@I1@")
+indi, _ := individual.(*gedcom.IndividualRecord)
 
-detector := duplicate.NewDuplicateDetector(config)
-result, _ := detector.FindDuplicates(tree)
+// Create detector
+detector := duplicate.NewDuplicateDetector(duplicate.DefaultConfig())
+detector.SetTree(tree) // Required for relationship matching
+
+// Find matches
+matches, _ := detector.FindMatches(indi, tree)
+
+// Process matches
+for _, match := range matches {
+    fmt.Printf("Potential match: %s (similarity: %.2f%%)\n",
+        match.Individual2.XrefID(),
+        match.SimilarityScore*100)
+}
+```
+
+### Example 4: Compare Two Individuals
+
+```go
+indi1 := tree.GetIndividual("@I1@").(*gedcom.IndividualRecord)
+indi2 := tree.GetIndividual("@I5@").(*gedcom.IndividualRecord)
+
+detector := duplicate.NewDuplicateDetector(duplicate.DefaultConfig())
+score, _ := detector.Compare(indi1, indi2)
+
+if score >= 0.85 {
+    fmt.Printf("High similarity: %.2f%%\n", score*100)
+}
 ```
 
 ### Example 5: Performance Metrics
@@ -457,128 +570,288 @@ if result.Metrics != nil {
 }
 ```
 
+### Example 6: Custom Configuration
+
+```go
+// Strict configuration for merging
+config := &duplicate.DuplicateConfig{
+    MinThreshold:          0.90,
+    HighConfidenceThreshold: 0.95,
+    NameWeight:            0.50,
+    DateWeight:            0.30,
+    UseRelationshipData:   true,
+    DateTolerance:         1,
+}
+
+detector := duplicate.NewDuplicateDetector(config)
+result, _ := detector.FindDuplicates(tree)
+
+// Only high-confidence matches
+for _, match := range result.Matches {
+    if match.Confidence == "high" || match.Confidence == "exact" {
+        // Process match
+    }
+}
+```
+
+---
+
+## Phonetic Matching
+
+### Soundex Algorithm
+
+The system uses the Soundex algorithm for phonetic name matching.
+
+**How it works:**
+- Converts names to 4-character codes
+- First letter + 3 digits based on consonants
+- Similar-sounding names get the same code
+
+**Examples:**
+- "Smith" → S530
+- "Smyth" → S530 (matches)
+- "Smythe" → S530 (matches)
+
+**Enable/Disable:**
+```go
+config := &duplicate.DuplicateConfig{
+    UsePhoneticMatching: true, // Default: true
+}
+```
+
+---
+
+## Relationship Matching
+
+### Using Family Relationships
+
+Relationship matching uses family connections to improve accuracy:
+
+- **Common Parents**: Same parents (FAMC) → strong indicator
+- **Common Spouse**: Same spouse (FAMS) → strong indicator
+- **Common Children**: Shared children → additional indicator
+
+**Requirements:**
+- `UseRelationshipData: true`
+- Tree must be set via `SetTree()`
+
+**Example:**
+```go
+detector := duplicate.NewDuplicateDetector(config)
+detector.SetTree(tree) // Required for relationship matching
+
+result, _ := detector.FindDuplicates(tree)
+
+// Check relationship scores
+for _, match := range result.Matches {
+    if match.RelationshipScore > 0 {
+        fmt.Printf("Relationship match: %.2f\n", match.RelationshipScore)
+    }
+}
+```
+
+---
+
 ## Performance
 
-### Optimization Features
+### Parallel Processing
 
-1. **Pre-filtering**: Indexes by surname, birth year, place
-2. **Early Termination**: Skips low-probability matches
-3. **Parallel Processing**: Multi-threaded comparison
-4. **Memory Pooling**: Reduces allocations
+The system automatically uses parallel processing for large datasets (>10 individuals).
+
+**Configuration:**
+```go
+config := &duplicate.DuplicateConfig{
+    UseParallelProcessing: true, // Default: true
+    NumWorkers:            8,     // Manual count (0 = auto-detect)
+}
+```
+
+**Performance:**
+- Sequential: O(n²) comparisons
+- Parallel: 4-8x faster on multi-core systems
+- Auto-detects optimal worker count (1.5x CPU cores)
 
 ### Expected Performance
 
-| File Size | Processing Time | Comparisons |
-|-----------|------------------|-------------|
-| 100 individuals | < 1 second | ~5,000 |
-| 1,000 individuals | ~5 seconds | ~500,000 |
-| 10,000 individuals | ~1 minute | ~50,000,000 |
-| 100,000 individuals | ~10 minutes | ~5,000,000,000 |
+| File Size | Comparisons | Time (Sequential) | Time (Parallel) |
+|-----------|-------------|-------------------|------------------|
+| 100 individuals | ~5,000 | < 1 second | < 1 second |
+| 1,000 individuals | ~500,000 | ~5 seconds | ~1 second |
+| 10,000 individuals | ~5,000,000 | ~1 minute | ~10 seconds |
+| 100,000 individuals | ~50,000,000 | ~10 minutes | ~2 minutes |
 
-**Note:** Performance varies based on:
-- Number of potential matches
-- Pre-filtering effectiveness
-- Parallel processing enabled
-- System resources
+### Optimization Features
+
+- **Pre-filtering**: Indexes by surname, birth year, place
+- **Early Termination**: Skips low-probability matches
+- **Memory Pooling**: Reduces allocations
+- **Caching**: Caches parsed dates/places
+
+---
 
 ## Best Practices
 
 ### 1. Choose Appropriate Thresholds
 
-- **Merging**: Use high threshold (0.85+) to avoid false positives
-- **Research**: Use lower threshold (0.60-0.70) to find all possibilities
-- **Quality Check**: Use medium threshold (0.70-0.80) for balanced results
+- **Merging**: Use high threshold (0.85-0.90)
+- **Research**: Use lower threshold (0.60-0.70)
+- **Quality Check**: Use medium threshold (0.70-0.80)
 
 ### 2. Enable Relationship Matching
 
-Relationship data is a strong indicator:
+Always enable when comparing within the same file:
+
 ```go
 config.UseRelationshipData = true
-detector.SetTree(tree)  // Required for relationship matching
+detector.SetTree(tree)
 ```
 
-### 3. Use Parallel Processing for Large Files
+### 3. Use Phonetic Matching
+
+Enable for better name matching:
 
 ```go
-config.UseParallelProcessing = true
-config.NumWorkers = 0  // Auto-detect, or set manually
+config.UsePhoneticMatching = true
 ```
 
-### 4. Review High-Confidence Matches First
+### 4. Configure Date Tolerance
+
+Adjust based on data quality:
+
+- High quality: `DateTolerance: 1`
+- Normal: `DateTolerance: 2` (default)
+- Low quality: `DateTolerance: 5`
+
+### 5. Review High-Confidence Matches First
+
+Process matches by confidence level:
 
 ```go
+// Exact matches first
 for _, match := range result.Matches {
-    if match.Confidence == "exact" || match.Confidence == "high" {
-        // Review these first
+    if match.Confidence == "exact" {
+        // Auto-merge candidate
+    }
+}
+
+// High confidence next
+for _, match := range result.Matches {
+    if match.Confidence == "high" {
+        // Manual review
     }
 }
 ```
 
-### 5. Check Matching Fields
-
-```go
-for _, match := range result.Matches {
-    fmt.Printf("Matching: %v\n", match.MatchingFields)
-    fmt.Printf("Different: %v\n", match.Differences)
-}
-```
+---
 
 ## Troubleshooting
 
-### No Matches Found
+### Issue: Too Many False Positives
 
-**Possible causes:**
-- Threshold too high
-- No actual duplicates in file
-- Missing data (names, dates)
+**Problem:** Many matches that aren't actually duplicates.
 
-**Solutions:**
+**Solution:**
+- Increase `MinThreshold`
+- Increase `HighConfidenceThreshold`
+- Enable `UseRelationshipData` for better accuracy
+- Review similarity scores and adjust weights
+
+### Issue: Missing Obvious Duplicates
+
+**Problem:** Duplicates not being detected.
+
+**Solution:**
 - Lower `MinThreshold`
-- Check data quality
-- Enable phonetic matching
+- Enable `UsePhoneticMatching`
+- Increase `DateTolerance`
+- Check if data is missing (names, dates)
 
-### Too Many False Positives
+### Issue: Slow Performance
 
-**Possible causes:**
-- Threshold too low
-- Common names (John Smith)
-- Missing relationship data
+**Problem:** Detection takes too long.
 
-**Solutions:**
-- Raise `MinThreshold`
-- Increase `NameWeight` or `DateWeight`
-- Enable relationship matching
+**Solution:**
+- Ensure `UseParallelProcessing: true`
+- Use `MaxComparisons` to limit comparisons
+- Check if pre-filtering is working
+- Consider sampling for very large files
 
-### Slow Performance
+### Issue: Relationship Matching Not Working
 
-**Possible causes:**
-- Very large files
-- Parallel processing disabled
-- Too many comparisons
+**Problem:** Relationship scores are always 0.
 
-**Solutions:**
-- Enable parallel processing
-- Set `MaxComparisons` limit
-- Use stricter pre-filtering
+**Solution:**
+- Ensure `UseRelationshipData: true`
+- Call `SetTree()` before comparison
+- Verify family relationships exist in tree
+- Check that individuals have FAMC/FAMS links
 
-## Integration
+---
 
-### With Query API
+## Advanced Usage
+
+### Custom Similarity Weights
+
+Adjust weights based on your data characteristics:
 
 ```go
-// Future integration
-q.Duplicates().MinThreshold(0.85).Execute()
+config := &duplicate.DuplicateConfig{
+    // If names are very reliable
+    NameWeight: 0.50,
+    DateWeight: 0.30,
+    PlaceWeight: 0.15,
+    
+    // If dates are more reliable
+    // NameWeight: 0.30,
+    // DateWeight: 0.50,
+    // PlaceWeight: 0.15,
+}
 ```
 
-### With CLI
+### Limiting Comparisons
 
-```bash
-# Future CLI command
-gedcom duplicates family.ged --threshold 0.85
+For very large files, limit comparisons:
+
+```go
+config := &duplicate.DuplicateConfig{
+    MaxComparisons: 100000, // Limit to 100k comparisons
+}
 ```
 
-## See Also
+### Processing Specific Subsets
 
-- [Duplicate Detection Design](DUPLICATE_DETECTION_DESIGN.md) - Detailed design document
-- [Query API Documentation](query-api.md) - Graph-based querying
-- [Types Documentation](types.md) - Core GEDCOM types
+Compare only specific individuals:
+
+```go
+// Get subset
+individuals := []*gedcom.IndividualRecord{indi1, indi2, indi3}
+
+// Compare manually
+detector := duplicate.NewDuplicateDetector(config)
+for i := 0; i < len(individuals); i++ {
+    for j := i + 1; j < len(individuals); j++ {
+        score, _ := detector.Compare(individuals[i], individuals[j])
+        if score >= config.MinThreshold {
+            // Process match
+        }
+    }
+}
+```
+
+---
+
+## Related Documentation
+
+- [Diff Documentation](diff.md) - Semantic comparison of GEDCOM files
+- [Query API Documentation](query-api.md) - Graph-based query API
+- [Types Documentation](types.md) - Core GEDCOM data types
+
+---
+
+## Examples Repository
+
+For more examples, see the [examples directory](../examples/) in the repository.
+
+---
+
+**Last Updated:** 2025-01-27
