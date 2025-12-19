@@ -526,6 +526,24 @@ gedcom-go/
 
 ## Performance & Benchmarks
 
+### What This Means in Practice
+
+**For most family trees (10K–200K individuals):**
+- Searches and relationship queries are **instant** (< 1 second)
+- Duplicate detection usually completes in **minutes** when scoped
+- Interactive exploration feels natural and responsive
+
+**For large population datasets (500K–5M individuals):**
+- Scoped operations (with filters) complete in **1-5 minutes**
+- Full dataset operations may require **10-20 minutes** and high-memory machines
+- Always scope duplicate detection by place, time period, or surname for best results
+
+**Memory requirements:**
+- Small trees (10K): ~150 MB
+- Medium trees (200K): ~3 GB
+- Large datasets (1.5M): ~21 GB peak
+- Very large datasets (5M): ~70-75 GB (parsing validated; full in-memory graph construction validated up to 1.5-2M on typical hardware)
+
 ### Real-World Performance (1.5M Individuals)
 
 GEDCOM Go has been stress-tested with **1.5 million individuals** (375,000 families). Here are the results:
