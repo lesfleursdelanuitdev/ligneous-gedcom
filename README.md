@@ -6,7 +6,7 @@
 
 **GEDCOM Go is a research-grade genealogy toolkit for people who want to understand, validate, and explore family history at scale — from a single family tree to entire communities.**
 
-It helps you find relationships, detect duplicates, understand data quality, and export meaningful subsets — without hiding complexity or making unsafe assumptions. Whether you're researching your own family (10K–200K individuals) or studying whole populations (500K–5M individuals), this tool provides the precision and safety that serious genealogical research requires.
+It helps you find relationships, detect duplicates, understand data quality, and export meaningful subsets — without hiding complexity or making unsafe assumptions. Whether you're researching your own family (50 to at most 50K individuals) or studying whole populations (500K–5M individuals), this tool provides the precision and safety that serious genealogical research requires.
 
 **Stable for Serious Genealogical Research** — Built with Go for performance and reliability, supporting the full GEDCOM 5.5.1 specification.
 
@@ -46,7 +46,7 @@ gedcom search family.ged --name "John" --sex M --birth-year 1900-1950
 gedcom export --descendants @I123@ --depth 8 -o branch.json
 ```
 
-> **📖 Next Steps:** Read the [User Workflows](#user-workflows) section to understand how the tool behaves differently depending on your dataset size (10K–200K vs 500K–5M individuals).
+> **📖 Next Steps:** Read the [User Workflows](#user-workflows) section to understand how the tool behaves differently depending on your dataset size (50–50K vs 500K–5M individuals).
 
 ## What This Tool Does
 
@@ -387,7 +387,7 @@ gedcom> exit
 > **📖 Important:** This section explains how to use GEDCOM Go effectively for your research goals.  
 > The tool behaves differently depending on your dataset size — read the section that matches your situation.
 
-### For Private Family Researchers (10K–200K individuals)
+### For Private Family Researchers (50 to at most 50K individuals)
 
 **Your typical scenario:** Your own family tree or a few related families, with a mix of complete and incomplete records.
 
@@ -528,7 +528,7 @@ gedcom-go/
 
 ### What This Means in Practice
 
-**For most family trees (10K–200K individuals):**
+**For most family trees (50 to at most 50K individuals):**
 - Searches and relationship queries are **instant** (< 1 second)
 - Duplicate detection usually completes in **minutes** when scoped
 - Interactive exploration feels natural and responsive

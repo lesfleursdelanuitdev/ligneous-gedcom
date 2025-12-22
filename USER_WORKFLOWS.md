@@ -2,7 +2,7 @@
 
 This guide is designed for genealogists and researchers using the GEDCOM Go tool. It focuses on practical workflows for two main audiences:
 
-1. **Private Family Researchers** (10K–200K individuals)
+1. **Private Family Researchers** (50 to at most 50K individuals)
 2. **Community/Population Researchers** (500K–5M individuals)
 
 ## Philosophy: "Genealogy Workshop, Not a Compiler"
@@ -25,7 +25,7 @@ You don't need to understand algorithms or technical details. The tool provides:
 ## For Private Family Researchers
 
 ### Your Typical Dataset
-- 10,000–200,000 individuals
+- 50 to at most 50,000 individuals
 - Your own family tree or a few related families
 - Mix of complete and incomplete records
 - Goal: Find duplicates, explore relationships, validate data
@@ -273,7 +273,7 @@ gedcom duplicates large.ged \
 
 ## Performance Expectations
 
-### Private Family Researchers (10K–200K)
+### Private Family Researchers (50 to at most 50K)
 - **Duplicate detection**: 1-5 minutes
 - **Graph queries**: Instant (< 1 second)
 - **Export**: Seconds

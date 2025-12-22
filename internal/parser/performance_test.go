@@ -265,10 +265,7 @@ func TestPerformance_ParseAndQuery_100K(t *testing.T) {
 	// Create query
 	t.Log("Creating query...")
 	queryStart := time.Now()
-	q, err := query.NewQueryFromGraph(graph)
-	if err != nil {
-		t.Fatalf("Query creation failed: %v", err)
-	}
+	q := query.NewQueryFromGraph(graph)
 	queryDuration := time.Since(queryStart)
 
 	// Run filter query
