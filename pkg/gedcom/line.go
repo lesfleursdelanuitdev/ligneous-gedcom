@@ -2,6 +2,7 @@ package gedcom
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -99,12 +100,20 @@ func (gl *GedcomLine) GetLines(selector string) []*GedcomLine {
 
 // ToGED converts the line and all its children to GEDCOM format.
 // Returns a slice of strings, one per line.
+// Children are sorted by tag for consistent output.
 func (gl *GedcomLine) ToGED() []string {
 	lines := []string{gl.toGEDLine()}
 	
-	// Process all children (sorted by tag for consistency)
-	// Note: We iterate through all tags and their children
-	for _, children := range gl.Children {
+	// Collect all tags and sort them for consistent output
+	tags := make([]string, 0, len(gl.Children))
+	for tag := range gl.Children {
+		tags = append(tags, tag)
+	}
+	sort.Strings(tags)
+	
+	// Process children in sorted tag order
+	for _, tag := range tags {
+		children := gl.Children[tag]
 		for _, child := range children {
 			lines = append(lines, child.ToGED()...)
 		}
