@@ -55,7 +55,7 @@ func TestHybridStorage_AllEdgeTypes(t *testing.T) {
 	tree.AddRecord(fam1)
 
 	// Build hybrid graph
-	graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath)
+	graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath, nil)
 	if err != nil {
 		t.Fatalf("Failed to build hybrid graph: %v", err)
 	}

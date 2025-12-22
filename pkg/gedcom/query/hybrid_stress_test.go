@@ -223,7 +223,7 @@ func TestHybridStorage_1M(t *testing.T) {
 	t.Log("\n--- Phase 2: Hybrid Graph Construction ---")
 	before, _, _, _, _ := getMemStatsHybrid()
 	buildStart := time.Now()
-	graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath)
+	graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath, nil)
 	buildDuration := time.Since(buildStart)
 	after, totalAlloc, _, _, _ := getMemStatsHybrid()
 
@@ -329,7 +329,7 @@ func TestHybridStorage_5M(t *testing.T) {
 		t.Log("\n--- Phase 2: Hybrid Graph Construction ---")
 		before, _, _, _, _ := getMemStatsHybrid()
 		buildStart := time.Now()
-		graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath)
+		graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath, nil)
 		buildDuration := time.Since(buildStart)
 		after, totalAlloc, _, _, _ := getMemStatsHybrid()
 
@@ -388,7 +388,7 @@ func TestHybridStorage_Concurrent(t *testing.T) {
 		badgerPath := filepath.Join(tmpDir, "test_graph")
 
 		tree := generateHybridTestTree(size)
-		graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath)
+		graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath, nil)
 		if err != nil {
 			t.Fatalf("Failed to build hybrid graph: %v", err)
 		}
@@ -444,7 +444,7 @@ func TestHybridStorage_Persistence(t *testing.T) {
 
 		// Create graph and add data
 		tree := generateHybridTestTree(1000)
-		graph1, err := BuildGraphHybrid(tree, sqlitePath, badgerPath)
+		graph1, err := BuildGraphHybrid(tree, sqlitePath, badgerPath, nil)
 		if err != nil {
 			t.Fatalf("Failed to build graph: %v", err)
 		}
@@ -491,7 +491,7 @@ func BenchmarkHybridStorage_Query(b *testing.B) {
 	badgerPath := filepath.Join(tmpDir, "bench_graph")
 
 	tree := generateHybridTestTree(size)
-	graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath)
+	graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath, nil)
 	if err != nil {
 		b.Fatalf("Failed to build graph: %v", err)
 	}
@@ -519,7 +519,7 @@ func BenchmarkHybridStorage_NodeLoad(b *testing.B) {
 	badgerPath := filepath.Join(tmpDir, "bench_graph")
 
 	tree := generateHybridTestTree(size)
-	graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath)
+	graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath, nil)
 	if err != nil {
 		b.Fatalf("Failed to build graph: %v", err)
 	}

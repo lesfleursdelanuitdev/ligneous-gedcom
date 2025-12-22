@@ -41,7 +41,7 @@ func TestBuildGraphHybrid_Basic(t *testing.T) {
 	tree.AddRecord(fam1)
 
 	// Build hybrid graph
-	graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath)
+	graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath, nil)
 	if err != nil {
 		t.Fatalf("Failed to build hybrid graph: %v", err)
 	}
@@ -101,7 +101,7 @@ func TestBuildGraphHybrid_Close(t *testing.T) {
 	indi1 := gedcom.NewIndividualRecord(indi1Line)
 	tree.AddRecord(indi1)
 
-	graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath)
+	graph, err := BuildGraphHybrid(tree, sqlitePath, badgerPath, nil)
 	if err != nil {
 		t.Fatalf("Failed to build hybrid graph: %v", err)
 	}

@@ -15,7 +15,7 @@ func TestHybridStorage_Initialization(t *testing.T) {
 	badgerPath := filepath.Join(tmpDir, "test_graph")
 
 	// Create hybrid storage
-	hs, err := NewHybridStorage(sqlitePath, badgerPath)
+	hs, err := NewHybridStorage(sqlitePath, badgerPath, nil)
 	if err != nil {
 		t.Fatalf("Failed to create hybrid storage: %v", err)
 	}
@@ -60,7 +60,7 @@ func TestHybridStorage_Cleanup(t *testing.T) {
 	sqlitePath := filepath.Join(tmpDir, "test_indexes.db")
 	badgerPath := filepath.Join(tmpDir, "test_graph")
 
-	hs, err := NewHybridStorage(sqlitePath, badgerPath)
+	hs, err := NewHybridStorage(sqlitePath, badgerPath, nil)
 	if err != nil {
 		t.Fatalf("Failed to create hybrid storage: %v", err)
 	}
