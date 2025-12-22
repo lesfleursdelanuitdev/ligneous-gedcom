@@ -36,56 +36,77 @@ func TestFilterQuery_Hybrid(t *testing.T) {
 	}
 	defer graph.Close()
 
-	// Test FilterQuery with hybrid storage
-	fq := NewFilterQuery(graph)
-
 	// Test by name (substring match should work)
-	results, err := fq.ByName("john").Execute()
+	fq1 := NewFilterQuery(graph)
+	results, err := fq1.ByName("john").Execute()
 	if err != nil {
 		t.Fatalf("Failed to execute filter query: %v", err)
 	}
-	if len(results) == 0 {
-		t.Logf("No results found - checking SQLite directly...")
-		// Debug: check what's in SQLite
-		var count int
-		err = graph.hybridStorage.SQLite().QueryRow("SELECT COUNT(*) FROM nodes WHERE type = 'individual'").Scan(&count)
-		if err != nil {
-			t.Logf("Error querying SQLite: %v", err)
-		} else {
-			t.Logf("Found %d individuals in SQLite", count)
-		}
-		// Try exact match
-		results, err = fq.ByNameExact("john /doe/").Execute()
-		if err != nil {
-			t.Fatalf("Failed to execute exact filter query: %v", err)
-		}
-		t.Logf("Exact match found %d results", len(results))
-		return // Skip rest of test for now
-	}
 	if len(results) != 1 {
-		t.Errorf("Expected 1 result, got %d", len(results))
+		t.Errorf("Expected 1 result for 'john', got %d", len(results))
+		if len(results) == 0 {
+			// Debug: check what's in SQLite
+			var count int
+			var name, nameLower string
+			err = graph.hybridStorage.SQLite().QueryRow("SELECT COUNT(*) FROM nodes WHERE type = 'individual'").Scan(&count)
+			if err != nil {
+				t.Logf("Error querying SQLite: %v", err)
+			} else {
+				t.Logf("Found %d individuals in SQLite", count)
+			}
+			err = graph.hybridStorage.SQLite().QueryRow("SELECT name, name_lower FROM nodes WHERE type = 'individual' LIMIT 1").Scan(&name, &nameLower)
+			if err == nil {
+				t.Logf("Sample name: '%s', name_lower: '%s'", name, nameLower)
+			}
+		}
 		return
 	}
 	if results[0].GetName() != "John /Doe/" {
 		t.Errorf("Expected 'John /Doe/', got '%s'", results[0].GetName())
 	}
 
-	// Test by name exact
-	results, err = fq.ByNameExact("Jane /Smith/").Execute()
+	// Test by name exact (case-insensitive) - create new query to avoid state issues
+	fq2 := NewFilterQuery(graph)
+	results, err = fq2.ByNameExact("jane /smith/").Execute()
 	if err != nil {
 		t.Fatalf("Failed to execute filter query: %v", err)
 	}
 	if len(results) != 1 {
-		t.Errorf("Expected 1 result, got %d", len(results))
+		t.Errorf("Expected 1 result for exact 'jane /smith/', got %d", len(results))
+		if len(results) == 0 {
+			// Debug: check what's stored and what the query returns
+			var name, nameLower string
+			err = graph.hybridStorage.SQLite().QueryRow("SELECT name, name_lower FROM nodes WHERE type = 'individual' AND xref = '@I2@'").Scan(&name, &nameLower)
+			if err == nil {
+				t.Logf("I2 name: '%s', name_lower: '%s'", name, nameLower)
+			}
+			// Check what the query helper returns
+			nodeIDs, err := graph.queryHelpers.FindByNameExact("jane /smith/")
+			if err == nil {
+				t.Logf("FindByNameExact('jane /smith/') returned %d node IDs: %v", len(nodeIDs), nodeIDs)
+			} else {
+				t.Logf("FindByNameExact error: %v", err)
+			}
+		}
 	}
 
-	// Test by name starts
-	results, err = fq.ByNameStarts("Jane").Execute()
+	// Test by name starts (case-insensitive) - create new query to avoid state issues
+	fq3 := NewFilterQuery(graph)
+	results, err = fq3.ByNameStarts("jane").Execute()
 	if err != nil {
 		t.Fatalf("Failed to execute filter query: %v", err)
 	}
 	if len(results) != 1 {
-		t.Errorf("Expected 1 result, got %d", len(results))
+		t.Errorf("Expected 1 result for starts 'jane', got %d", len(results))
+		if len(results) == 0 {
+			// Debug: check what the query helper returns
+			nodeIDs, err := graph.queryHelpers.FindByNameStarts("jane")
+			if err == nil {
+				t.Logf("FindByNameStarts('jane') returned %d node IDs: %v", len(nodeIDs), nodeIDs)
+			} else {
+				t.Logf("FindByNameStarts error: %v", err)
+			}
+		}
 	}
 }
 
