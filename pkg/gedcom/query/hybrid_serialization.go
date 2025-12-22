@@ -10,10 +10,14 @@ import (
 
 // NodeData represents serialized node data for BadgerDB
 // Note: We don't serialize the full record - we store the XREF and reconstruct from tree
+// For EventNode, we also store EventType and EventData since events don't have top-level records
 type NodeData struct {
 	ID       uint32
 	Xref     string
 	NodeType NodeType
+	// Event-specific fields (only used for NodeTypeEvent)
+	EventType string
+	EventData map[string]interface{}
 	// Data field removed - we'll reconstruct from tree using Xref
 }
 
@@ -29,11 +33,18 @@ type EdgeData struct {
 
 // SerializeNode serializes a node to bytes for storage in BadgerDB
 // Note: We only store metadata (XREF, type) - the full record is reconstructed from tree
+// For EventNode, we also store EventType and EventData
 func SerializeNode(node GraphNode, graph *Graph) ([]byte, error) {
 	nodeData := NodeData{
 		ID:       getNodeIDFromXref(node.ID(), graph),
 		Xref:     node.ID(),
 		NodeType: node.NodeType(),
+	}
+
+	// For EventNode, store event-specific data
+	if eventNode, ok := node.(*EventNode); ok {
+		nodeData.EventType = eventNode.EventType
+		nodeData.EventData = eventNode.EventData
 	}
 
 	return serialize(nodeData)
@@ -141,6 +152,33 @@ func DeserializeNode(data []byte, graph *Graph) (GraphNode, error) {
 				record:   repoRecord,
 			},
 			Repository: repoRecord,
+		}, nil
+
+	case NodeTypeEvent:
+		// Events don't have top-level records - reconstruct from stored EventType and EventData
+		if nodeData.EventType == "" {
+			return nil, fmt.Errorf("event %s missing EventType", nodeData.Xref)
+		}
+		if nodeData.EventData == nil {
+			nodeData.EventData = make(map[string]interface{})
+		}
+		// Ensure event type is in event data
+		if nodeData.EventData["type"] == nil {
+			nodeData.EventData["type"] = nodeData.EventType
+		}
+		return &EventNode{
+			BaseNode: &BaseNode{
+				xrefID:   nodeData.Xref,
+				nodeType: NodeTypeEvent,
+				record:   nil, // Events don't have top-level records
+				inEdges:  make([]*Edge, 0),
+				outEdges: make([]*Edge, 0),
+			},
+			EventID:   nodeData.Xref,
+			EventType: nodeData.EventType,
+			EventData: nodeData.EventData,
+			Sources:   make([]*SourceNode, 0),
+			Notes:     make([]*NoteNode, 0),
 		}, nil
 
 	default:
