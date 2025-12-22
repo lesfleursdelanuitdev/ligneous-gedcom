@@ -264,33 +264,37 @@ func TestBuildGraph_CachedRelationships(t *testing.T) {
 		t.Fatalf("Failed to build graph: %v", err)
 	}
 
-	// Check cached relationships
+	// Check relationships (computed on-demand from edges)
 	famNode := graph.GetFamily("@F1@")
-	if famNode.Husband == nil {
-		t.Error("Expected Husband to be cached")
+	husband := famNode.getHusbandFromEdges()
+	if husband == nil {
+		t.Error("Expected Husband to be found")
 	}
-	if famNode.Husband.ID() != "@I1@" {
-		t.Errorf("Expected Husband @I1@, got %s", famNode.Husband.ID())
-	}
-
-	if famNode.Wife == nil {
-		t.Error("Expected Wife to be cached")
-	}
-	if famNode.Wife.ID() != "@I2@" {
-		t.Errorf("Expected Wife @I2@, got %s", famNode.Wife.ID())
+	if husband.ID() != "@I1@" {
+		t.Errorf("Expected Husband @I1@, got %s", husband.ID())
 	}
 
-	if len(famNode.Children) == 0 {
-		t.Error("Expected Children to be cached")
+	wife := famNode.getWifeFromEdges()
+	if wife == nil {
+		t.Error("Expected Wife to be found")
 	}
-	if len(famNode.Children) > 0 && famNode.Children[0].ID() != "@I3@" {
-		t.Errorf("Expected Child @I3@, got %s", famNode.Children[0].ID())
+	if wife.ID() != "@I2@" {
+		t.Errorf("Expected Wife @I2@, got %s", wife.ID())
 	}
 
-	// Check individual cached relationships
+	children := famNode.getChildrenFromEdges()
+	if len(children) == 0 {
+		t.Error("Expected Children to be found")
+	}
+	if len(children) > 0 && children[0].ID() != "@I3@" {
+		t.Errorf("Expected Child @I3@, got %s", children[0].ID())
+	}
+
+	// Check individual relationships (computed on-demand)
 	indi3Node := graph.GetIndividual("@I3@")
-	if len(indi3Node.Parents) == 0 {
-		t.Error("Expected Parents to be cached")
+	parents := indi3Node.getParentsFromEdges()
+	if len(parents) == 0 {
+		t.Error("Expected Parents to be found")
 	}
 }
 

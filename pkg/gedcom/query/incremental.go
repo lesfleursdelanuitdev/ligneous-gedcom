@@ -29,13 +29,19 @@ func (g *Graph) AddNodeIncremental(node GraphNode) error {
 }
 
 // RemoveNodeIncremental removes a node from the graph and cleans up relationships.
-func (g *Graph) RemoveNodeIncremental(nodeID string) error {
+func (g *Graph) RemoveNodeIncremental(xrefID string) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	node := g.nodes[nodeID]
+	// Get uint32 ID
+	internalID := g.xrefToID[xrefID]
+	if internalID == 0 {
+		return fmt.Errorf("node %s not found", xrefID)
+	}
+
+	node := g.nodes[internalID]
 	if node == nil {
-		return fmt.Errorf("node %s not found", nodeID)
+		return fmt.Errorf("node %s not found", xrefID)
 	}
 
 	// Remove all edges connected to this node
@@ -55,26 +61,26 @@ func (g *Graph) RemoveNodeIncremental(nodeID string) error {
 		}
 	}
 
-	// Remove from type-specific maps
+	// Remove from type-specific maps (using uint32 ID)
 	switch node.NodeType() {
 	case NodeTypeIndividual:
-		delete(g.individuals, nodeID)
+		delete(g.individuals, internalID)
 		// Update indexes (remove from all indexes)
-		g.removeFromIndexes(nodeID)
+		g.removeFromIndexes(xrefID)
 	case NodeTypeFamily:
-		delete(g.families, nodeID)
+		delete(g.families, internalID)
 	case NodeTypeNote:
-		delete(g.notes, nodeID)
+		delete(g.notes, internalID)
 	case NodeTypeSource:
-		delete(g.sources, nodeID)
+		delete(g.sources, internalID)
 	case NodeTypeRepository:
-		delete(g.repositories, nodeID)
+		delete(g.repositories, internalID)
 	case NodeTypeEvent:
-		delete(g.events, nodeID)
+		delete(g.events, internalID)
 	}
 
-	// Remove from main nodes map
-	delete(g.nodes, nodeID)
+	// Remove from main nodes map (using uint32 ID)
+	delete(g.nodes, internalID)
 
 	// Invalidate cache
 	g.cache.clear()
@@ -92,7 +98,45 @@ func (g *Graph) AddEdgeIncremental(edge *Edge) error {
 		return err
 	}
 
-	// Update cached relationships based on edge type
+	// For family relationship edges, also create the reverse edge (like in createFamilyEdges)
+	// This ensures bidirectional relationships work correctly
+	switch edge.EdgeType {
+	case EdgeTypeHUSB:
+		// Family --[HUSB]--> Individual, also create Individual --[FAMS]--> Family
+		if famNode, ok := edge.From.(*FamilyNode); ok {
+			if indiNode, ok := edge.To.(*IndividualNode); ok {
+				edgeID2 := fmt.Sprintf("%s_FAMS_%s", indiNode.ID(), famNode.ID())
+				edge2 := NewEdgeWithFamily(edgeID2, indiNode, famNode, EdgeTypeFAMS, famNode)
+				if err := g.addEdgeInternal(edge2); err != nil {
+					// If reverse edge already exists, that's okay
+				}
+			}
+		}
+	case EdgeTypeWIFE:
+		// Family --[WIFE]--> Individual, also create Individual --[FAMS]--> Family
+		if famNode, ok := edge.From.(*FamilyNode); ok {
+			if indiNode, ok := edge.To.(*IndividualNode); ok {
+				edgeID2 := fmt.Sprintf("%s_FAMS_%s", indiNode.ID(), famNode.ID())
+				edge2 := NewEdgeWithFamily(edgeID2, indiNode, famNode, EdgeTypeFAMS, famNode)
+				if err := g.addEdgeInternal(edge2); err != nil {
+					// If reverse edge already exists, that's okay
+				}
+			}
+		}
+	case EdgeTypeCHIL:
+		// Family --[CHIL]--> Individual, also create Individual --[FAMC]--> Family
+		if famNode, ok := edge.From.(*FamilyNode); ok {
+			if indiNode, ok := edge.To.(*IndividualNode); ok {
+				edgeID2 := fmt.Sprintf("%s_FAMC_%s", indiNode.ID(), famNode.ID())
+				edge2 := NewEdgeWithFamily(edgeID2, indiNode, famNode, EdgeTypeFAMC, famNode)
+				if err := g.addEdgeInternal(edge2); err != nil {
+					// If reverse edge already exists, that's okay
+				}
+			}
+		}
+	}
+
+	// Update cached relationships based on edge type (no-op now, but kept for compatibility)
 	g.updateRelationshipsForEdge(edge)
 
 	// Invalidate cache
@@ -121,7 +165,80 @@ func (g *Graph) RemoveEdgeIncremental(edgeID string) error {
 		return err
 	}
 
-	// Update cached relationships
+	// For family relationship edges, also remove the reverse edge
+	switch edgeType {
+	case EdgeTypeHUSB:
+		// Remove corresponding FAMS edge
+		if indiNode, ok := toNode.(*IndividualNode); ok {
+			if famNode, ok := fromNode.(*FamilyNode); ok {
+				reverseEdgeID := fmt.Sprintf("%s_FAMS_%s", indiNode.ID(), famNode.ID())
+				if reverseEdge := g.edges[reverseEdgeID]; reverseEdge != nil {
+					g.removeEdgeInternal(reverseEdgeID)
+				}
+			}
+		}
+	case EdgeTypeWIFE:
+		// Remove corresponding FAMS edge
+		if indiNode, ok := toNode.(*IndividualNode); ok {
+			if famNode, ok := fromNode.(*FamilyNode); ok {
+				reverseEdgeID := fmt.Sprintf("%s_FAMS_%s", indiNode.ID(), famNode.ID())
+				if reverseEdge := g.edges[reverseEdgeID]; reverseEdge != nil {
+					g.removeEdgeInternal(reverseEdgeID)
+				}
+			}
+		}
+	case EdgeTypeCHIL:
+		// Remove corresponding FAMC edge (may have index suffix)
+		if indiNode, ok := toNode.(*IndividualNode); ok {
+			if famNode, ok := fromNode.(*FamilyNode); ok {
+				// Find FAMC edge (may have index suffix like _0, _1, etc.)
+				edgesToRemove := make([]string, 0)
+				for eID, e := range g.edges {
+					if e.EdgeType == EdgeTypeFAMC && e.From == indiNode && e.To == famNode {
+						edgesToRemove = append(edgesToRemove, eID)
+					}
+				}
+				for _, eID := range edgesToRemove {
+					g.removeEdgeInternal(eID)
+				}
+			}
+		}
+	case EdgeTypeFAMS:
+		// Remove corresponding HUSB or WIFE edge
+		if indiNode, ok := fromNode.(*IndividualNode); ok {
+			if famNode, ok := toNode.(*FamilyNode); ok {
+				// Check for HUSB edge
+				husbEdgeID := fmt.Sprintf("%s_HUSB_%s", famNode.ID(), indiNode.ID())
+				if husbEdge := g.edges[husbEdgeID]; husbEdge != nil {
+					g.removeEdgeInternal(husbEdgeID)
+				} else {
+					// Check for WIFE edge
+					wifeEdgeID := fmt.Sprintf("%s_WIFE_%s", famNode.ID(), indiNode.ID())
+					if wifeEdge := g.edges[wifeEdgeID]; wifeEdge != nil {
+						g.removeEdgeInternal(wifeEdgeID)
+					}
+				}
+			}
+		}
+	case EdgeTypeFAMC:
+		// Remove corresponding CHIL edge
+		if indiNode, ok := fromNode.(*IndividualNode); ok {
+			if famNode, ok := toNode.(*FamilyNode); ok {
+				// Find CHIL edge (may have index suffix)
+				edgesToRemove := make([]string, 0)
+				for eID, e := range g.edges {
+					if e.EdgeType == EdgeTypeCHIL && e.From == famNode && e.To == indiNode {
+						edgesToRemove = append(edgesToRemove, eID)
+					}
+				}
+				for _, eID := range edgesToRemove {
+					g.removeEdgeInternal(eID)
+				}
+			}
+		}
+	}
+
+	// Update cached relationships (no-op now, but kept for compatibility)
 	g.updateRelationshipsAfterEdgeRemoval(fromNode, toNode, edgeType)
 
 	// Invalidate cache
@@ -133,44 +250,47 @@ func (g *Graph) RemoveEdgeIncremental(edgeID string) error {
 // Internal helper methods (must be called with lock held)
 
 func (g *Graph) addNodeInternal(node GraphNode) error {
-	id := node.ID()
-	if id == "" {
+	xrefID := node.ID()
+	if xrefID == "" {
 		return fmt.Errorf("node ID cannot be empty")
 	}
 
+	// Get or create uint32 ID for this XREF
+	internalID := g.getOrCreateID(xrefID)
+
 	// Check if node already exists
-	if _, exists := g.nodes[id]; exists {
-		return fmt.Errorf("node with ID %s already exists", id)
+	if _, exists := g.nodes[internalID]; exists {
+		return fmt.Errorf("node with ID %s already exists", xrefID)
 	}
 
-	// Add to nodes map
-	g.nodes[id] = node
+	// Add to nodes map (using uint32 ID)
+	g.nodes[internalID] = node
 
-	// Add to type-specific map
+	// Add to type-specific map (using uint32 ID)
 	switch node.NodeType() {
 	case NodeTypeIndividual:
 		if indiNode, ok := node.(*IndividualNode); ok {
-			g.individuals[id] = indiNode
+			g.individuals[internalID] = indiNode
 		}
 	case NodeTypeFamily:
 		if famNode, ok := node.(*FamilyNode); ok {
-			g.families[id] = famNode
+			g.families[internalID] = famNode
 		}
 	case NodeTypeNote:
 		if noteNode, ok := node.(*NoteNode); ok {
-			g.notes[id] = noteNode
+			g.notes[internalID] = noteNode
 		}
 	case NodeTypeSource:
 		if sourceNode, ok := node.(*SourceNode); ok {
-			g.sources[id] = sourceNode
+			g.sources[internalID] = sourceNode
 		}
 	case NodeTypeRepository:
 		if repoNode, ok := node.(*RepositoryNode); ok {
-			g.repositories[id] = repoNode
+			g.repositories[internalID] = repoNode
 		}
 	case NodeTypeEvent:
 		if eventNode, ok := node.(*EventNode); ok {
-			g.events[id] = eventNode
+			g.events[internalID] = eventNode
 		}
 	}
 
@@ -198,9 +318,11 @@ func (g *Graph) addEdgeInternal(edge *Edge) error {
 	// Add to edges map
 	g.edges[edge.ID] = edge
 
-	// Add to edge index
-	fromID := edge.From.ID()
-	toID := edge.To.ID()
+	// Add to edge index (using uint32 IDs)
+	fromXref := edge.From.ID()
+	toXref := edge.To.ID()
+	fromID := g.getOrCreateID(fromXref)
+	toID := g.getOrCreateID(toXref)
 
 	g.edgeIndex[fromID] = append(g.edgeIndex[fromID], edge)
 	g.edgeIndex[toID] = append(g.edgeIndex[toID], edge)
@@ -224,12 +346,18 @@ func (g *Graph) removeEdgeInternal(edgeID string) error {
 		return fmt.Errorf("edge %s not found", edgeID)
 	}
 
-	fromID := edge.From.ID()
-	toID := edge.To.ID()
+	fromXref := edge.From.ID()
+	toXref := edge.To.ID()
+	fromID := g.getID(fromXref)
+	toID := g.getID(toXref)
 
-	// Remove from edge index
-	g.removeFromEdgeIndex(fromID, edge)
-	g.removeFromEdgeIndex(toID, edge)
+	// Remove from edge index (using uint32 IDs)
+	if fromID != 0 {
+		g.removeFromEdgeIndex(fromID, edge)
+	}
+	if toID != 0 {
+		g.removeFromEdgeIndex(toID, edge)
+	}
 
 	// Remove from node's edge lists
 	edge.From.RemoveOutEdge(edge)
@@ -247,7 +375,7 @@ func (g *Graph) removeEdgeInternal(edgeID string) error {
 	return nil
 }
 
-func (g *Graph) removeFromEdgeIndex(nodeID string, edge *Edge) {
+func (g *Graph) removeFromEdgeIndex(nodeID uint32, edge *Edge) {
 	edges := g.edgeIndex[nodeID]
 	for i, e := range edges {
 		if e.ID == edge.ID {
@@ -259,314 +387,40 @@ func (g *Graph) removeFromEdgeIndex(nodeID string, edge *Edge) {
 	}
 }
 
-// updateRelationshipsForEdge updates cached relationships when an edge is added.
+// updateRelationshipsForEdge is no longer needed.
+// Relationships are now computed on-demand from edges, so we don't need to maintain cached relationships.
 func (g *Graph) updateRelationshipsForEdge(edge *Edge) {
-	switch edge.EdgeType {
-	case EdgeTypeHUSB:
-		// Family -> Individual (husband)
-		if famNode, ok := edge.From.(*FamilyNode); ok {
-			if indiNode, ok := edge.To.(*IndividualNode); ok {
-				famNode.Husband = indiNode
-				// Update spouse relationship
-				if famNode.Wife != nil {
-					g.addSpouseRelationship(indiNode, famNode.Wife)
-					g.addSpouseRelationship(famNode.Wife, indiNode)
-				}
-			}
-		}
-
-	case EdgeTypeWIFE:
-		// Family -> Individual (wife)
-		if famNode, ok := edge.From.(*FamilyNode); ok {
-			if indiNode, ok := edge.To.(*IndividualNode); ok {
-				famNode.Wife = indiNode
-				// Update spouse relationship
-				if famNode.Husband != nil {
-					g.addSpouseRelationship(indiNode, famNode.Husband)
-					g.addSpouseRelationship(famNode.Husband, indiNode)
-				}
-			}
-		}
-
-	case EdgeTypeCHIL:
-		// Family -> Individual (child)
-		if famNode, ok := edge.From.(*FamilyNode); ok {
-			if indiNode, ok := edge.To.(*IndividualNode); ok {
-				// Add to family's children
-				if !g.containsChild(famNode.Children, indiNode) {
-					famNode.Children = append(famNode.Children, indiNode)
-				}
-				// Update parent relationships
-				if famNode.Husband != nil {
-					g.addParentChildRelationship(famNode.Husband, indiNode)
-				}
-				if famNode.Wife != nil {
-					g.addParentChildRelationship(famNode.Wife, indiNode)
-				}
-				// Update sibling relationships
-				for _, sibling := range famNode.Children {
-					if sibling.ID() != indiNode.ID() {
-						g.addSiblingRelationship(indiNode, sibling)
-						g.addSiblingRelationship(sibling, indiNode)
-					}
-				}
-			}
-		}
-
-	case EdgeTypeFAMC:
-		// Individual -> Family (child of family)
-		if indiNode, ok := edge.From.(*IndividualNode); ok {
-			if edge.Family != nil {
-				famNode := edge.Family
-				// Update parent relationships
-				if famNode.Husband != nil {
-					g.addParentChildRelationship(famNode.Husband, indiNode)
-				}
-				if famNode.Wife != nil {
-					g.addParentChildRelationship(famNode.Wife, indiNode)
-				}
-				// Update sibling relationships
-				for _, sibling := range famNode.Children {
-					if sibling.ID() != indiNode.ID() {
-						g.addSiblingRelationship(indiNode, sibling)
-						g.addSiblingRelationship(sibling, indiNode)
-					}
-				}
-			}
-		}
-
-	case EdgeTypeFAMS:
-		// Individual -> Family (spouse in family)
-		if indiNode, ok := edge.From.(*IndividualNode); ok {
-			if edge.Family != nil {
-				famNode := edge.Family
-				// Update spouse relationships
-				if famNode.Husband != nil && famNode.Husband.ID() != indiNode.ID() {
-					g.addSpouseRelationship(indiNode, famNode.Husband)
-					g.addSpouseRelationship(famNode.Husband, indiNode)
-				}
-				if famNode.Wife != nil && famNode.Wife.ID() != indiNode.ID() {
-					g.addSpouseRelationship(indiNode, famNode.Wife)
-					g.addSpouseRelationship(famNode.Wife, indiNode)
-				}
-				// Update child relationships
-				for _, child := range famNode.Children {
-					g.addParentChildRelationship(indiNode, child)
-				}
-			}
-		}
-	}
+	// No-op: relationships computed on-demand from edges
 }
 
-// updateRelationshipsAfterEdgeRemoval updates cached relationships when an edge is removed.
+// updateRelationshipsAfterEdgeRemoval is no longer needed.
+// Relationships are now computed on-demand from edges, so we don't need to maintain cached relationships.
 func (g *Graph) updateRelationshipsAfterEdgeRemoval(fromNode, toNode GraphNode, edgeType EdgeType) {
-	switch edgeType {
-	case EdgeTypeHUSB:
-		if famNode, ok := fromNode.(*FamilyNode); ok {
-			famNode.Husband = nil
-			// Remove spouse relationships
-			if famNode.Wife != nil {
-				g.removeSpouseRelationship(famNode.Wife, toNode)
-			}
-		}
-
-	case EdgeTypeWIFE:
-		if famNode, ok := fromNode.(*FamilyNode); ok {
-			famNode.Wife = nil
-			// Remove spouse relationships
-			if famNode.Husband != nil {
-				g.removeSpouseRelationship(famNode.Husband, toNode)
-			}
-		}
-
-	case EdgeTypeCHIL:
-		if famNode, ok := fromNode.(*FamilyNode); ok {
-			// Remove from family's children
-			famNode.Children = g.removeChild(famNode.Children, toNode)
-			// Remove parent-child relationships
-			if indiNode, ok := toNode.(*IndividualNode); ok {
-				if famNode.Husband != nil {
-					g.removeParentChildRelationship(famNode.Husband, indiNode)
-				}
-				if famNode.Wife != nil {
-					g.removeParentChildRelationship(famNode.Wife, indiNode)
-				}
-				// Remove sibling relationships
-				for _, sibling := range famNode.Children {
-					g.removeSiblingRelationship(indiNode, sibling)
-					g.removeSiblingRelationship(sibling, indiNode)
-				}
-			}
-		}
-
-	case EdgeTypeFAMC:
-		if indiNode, ok := fromNode.(*IndividualNode); ok {
-			// Remove parent relationships
-			// Need to find the family to get parents
-			for _, edge := range indiNode.OutEdges() {
-				if edge.EdgeType == EdgeTypeFAMC && edge.Family != nil {
-					famNode := edge.Family
-					if famNode.Husband != nil {
-						g.removeParentChildRelationship(famNode.Husband, indiNode)
-					}
-					if famNode.Wife != nil {
-						g.removeParentChildRelationship(famNode.Wife, indiNode)
-					}
-					// Remove sibling relationships
-					for _, sibling := range famNode.Children {
-						if sibling.ID() != indiNode.ID() {
-							g.removeSiblingRelationship(indiNode, sibling)
-							g.removeSiblingRelationship(sibling, indiNode)
-						}
-					}
-				}
-			}
-		}
-
-	case EdgeTypeFAMS:
-		if indiNode, ok := fromNode.(*IndividualNode); ok {
-			// Remove spouse and child relationships
-			// Need to find the family
-			for _, edge := range indiNode.OutEdges() {
-				if edge.EdgeType == EdgeTypeFAMS && edge.Family != nil {
-					famNode := edge.Family
-					if famNode.Husband != nil && famNode.Husband.ID() != indiNode.ID() {
-						g.removeSpouseRelationship(indiNode, famNode.Husband)
-					}
-					if famNode.Wife != nil && famNode.Wife.ID() != indiNode.ID() {
-						g.removeSpouseRelationship(indiNode, famNode.Wife)
-					}
-					for _, child := range famNode.Children {
-						g.removeParentChildRelationship(indiNode, child)
-					}
-				}
-			}
-		}
-	}
+	// No-op: relationships computed on-demand from edges
 }
 
-// Helper functions for relationship management
+// Helper functions for relationship management are no longer needed.
+// Relationships are now computed on-demand from edges.
+// These functions are kept as no-ops for compatibility but are not used.
+// func (g *Graph) addSpouseRelationship(indi1, indi2 *IndividualNode) { }
+// func (g *Graph) removeSpouseRelationship(indi1 *IndividualNode, indi2 GraphNode) { }
+// func (g *Graph) addParentChildRelationship(parent, child *IndividualNode) { }
+// func (g *Graph) removeParentChildRelationship(parent *IndividualNode, child GraphNode) { }
+// func (g *Graph) addSiblingRelationship(sib1, sib2 *IndividualNode) { }
+// func (g *Graph) removeSiblingRelationship(sib1 *IndividualNode, sib2 GraphNode) { }
 
-func (g *Graph) addSpouseRelationship(indi1, indi2 *IndividualNode) {
-	if !g.containsSpouse(indi1.Spouses, indi2) {
-		indi1.Spouses = append(indi1.Spouses, indi2)
-	}
-}
-
-func (g *Graph) removeSpouseRelationship(indi1 *IndividualNode, indi2 GraphNode) {
-	if indi2Node, ok := indi2.(*IndividualNode); ok {
-		indi1.Spouses = g.removeSpouse(indi1.Spouses, indi2Node)
-	}
-}
-
-func (g *Graph) addParentChildRelationship(parent, child *IndividualNode) {
-	if !g.containsChild(parent.Children, child) {
-		parent.Children = append(parent.Children, child)
-	}
-	if !g.containsParent(child.Parents, parent) {
-		child.Parents = append(child.Parents, parent)
-	}
-}
-
-func (g *Graph) removeParentChildRelationship(parent *IndividualNode, child GraphNode) {
-	if childNode, ok := child.(*IndividualNode); ok {
-		parent.Children = g.removeChild(parent.Children, childNode)
-		childNode.Parents = g.removeParent(childNode.Parents, parent)
-	}
-}
-
-func (g *Graph) addSiblingRelationship(sib1, sib2 *IndividualNode) {
-	if sib1.ID() != sib2.ID() && !g.containsSibling(sib1.Siblings, sib2) {
-		sib1.Siblings = append(sib1.Siblings, sib2)
-	}
-}
-
-func (g *Graph) removeSiblingRelationship(sib1 *IndividualNode, sib2 GraphNode) {
-	if sib2Node, ok := sib2.(*IndividualNode); ok {
-		sib1.Siblings = g.removeSibling(sib1.Siblings, sib2Node)
-	}
-}
-
-// Contains checks
-
-func (g *Graph) containsSpouse(spouses []*IndividualNode, spouse *IndividualNode) bool {
-	for _, s := range spouses {
-		if s.ID() == spouse.ID() {
-			return true
-		}
-	}
-	return false
-}
-
-func (g *Graph) containsChild(children []*IndividualNode, child *IndividualNode) bool {
-	for _, c := range children {
-		if c.ID() == child.ID() {
-			return true
-		}
-	}
-	return false
-}
-
-func (g *Graph) containsParent(parents []*IndividualNode, parent *IndividualNode) bool {
-	for _, p := range parents {
-		if p.ID() == parent.ID() {
-			return true
-		}
-	}
-	return false
-}
-
-func (g *Graph) containsSibling(siblings []*IndividualNode, sibling *IndividualNode) bool {
-	for _, s := range siblings {
-		if s.ID() == sibling.ID() {
-			return true
-		}
-	}
-	return false
-}
-
-// Remove helpers
-
-func (g *Graph) removeSpouse(spouses []*IndividualNode, spouse *IndividualNode) []*IndividualNode {
-	result := make([]*IndividualNode, 0, len(spouses))
-	for _, s := range spouses {
-		if s.ID() != spouse.ID() {
-			result = append(result, s)
-		}
-	}
-	return result
-}
-
-func (g *Graph) removeChild(children []*IndividualNode, child GraphNode) []*IndividualNode {
-	childID := child.ID()
-	result := make([]*IndividualNode, 0, len(children))
-	for _, c := range children {
-		if c.ID() != childID {
-			result = append(result, c)
-		}
-	}
-	return result
-}
-
-func (g *Graph) removeParent(parents []*IndividualNode, parent *IndividualNode) []*IndividualNode {
-	result := make([]*IndividualNode, 0, len(parents))
-	for _, p := range parents {
-		if p.ID() != parent.ID() {
-			result = append(result, p)
-		}
-	}
-	return result
-}
-
-func (g *Graph) removeSibling(siblings []*IndividualNode, sibling *IndividualNode) []*IndividualNode {
-	result := make([]*IndividualNode, 0, len(siblings))
-	for _, s := range siblings {
-		if s.ID() != sibling.ID() {
-			result = append(result, s)
-		}
-	}
-	return result
-}
+// Contains checks and remove helpers are no longer needed.
+// Relationships are now computed on-demand from edges, so these helper functions
+// that operated on cached relationship slices are obsolete.
+// They are kept as no-ops for compatibility but are not used.
+// func (g *Graph) containsSpouse(spouses []*IndividualNode, spouse *IndividualNode) bool { return false }
+// func (g *Graph) containsChild(children []*IndividualNode, child *IndividualNode) bool { return false }
+// func (g *Graph) containsParent(parents []*IndividualNode, parent *IndividualNode) bool { return false }
+// func (g *Graph) containsSibling(siblings []*IndividualNode, sibling *IndividualNode) bool { return false }
+// func (g *Graph) removeSpouse(spouses []*IndividualNode, spouse *IndividualNode) []*IndividualNode { return nil }
+// func (g *Graph) removeChild(children []*IndividualNode, child GraphNode) []*IndividualNode { return nil }
+// func (g *Graph) removeParent(parents []*IndividualNode, parent *IndividualNode) []*IndividualNode { return nil }
+// func (g *Graph) removeSibling(siblings []*IndividualNode, sibling *IndividualNode) []*IndividualNode { return nil }
 
 // Index management
 
@@ -624,8 +478,11 @@ func (g *Graph) updateIndexesForIndividual(indiNode *IndividualNode) {
 	}
 
 	// Update boolean indexes
-	g.indexes.hasChildrenIndex[xrefID] = len(indiNode.Children) > 0
-	g.indexes.hasSpouseIndex[xrefID] = len(indiNode.Spouses) > 0
+	// Compute from edges instead of cached fields
+	children := indiNode.getChildrenFromEdges()
+	g.indexes.hasChildrenIndex[xrefID] = len(children) > 0
+	spouses := indiNode.getSpousesFromEdges()
+	g.indexes.hasSpouseIndex[xrefID] = len(spouses) > 0
 	g.indexes.livingIndex[xrefID] = indi.GetDeathDate() == ""
 }
 

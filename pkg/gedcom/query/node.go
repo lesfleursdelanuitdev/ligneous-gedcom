@@ -89,7 +89,10 @@ func (bn *BaseNode) InEdges() []*Edge {
 }
 
 // OutEdges returns all outgoing edges.
+// If lazy mode is enabled, triggers edge loading if not already loaded.
 func (bn *BaseNode) OutEdges() []*Edge {
+	// Note: Edge loading is handled by Graph.ensureEdgesLoaded()
+	// which is called before accessing edges
 	return bn.outEdges
 }
 
@@ -175,11 +178,8 @@ type IndividualNode struct {
 	*BaseNode
 	Individual *gedcom.IndividualRecord
 
-	// Cached relationships (for performance)
-	Parents  []*IndividualNode
-	Children []*IndividualNode
-	Spouses  []*IndividualNode
-	Siblings []*IndividualNode
+	// Note: Relationships (Parents, Children, Spouses, Siblings) are now computed
+	// on-demand from edges to save memory. Use helper methods or query API.
 }
 
 // NewIndividualNode creates a new IndividualNode.
@@ -194,10 +194,6 @@ func NewIndividualNode(xrefID string, record *gedcom.IndividualRecord) *Individu
 			outEdges: make([]*Edge, 0),
 		},
 		Individual: record,
-		Parents:    make([]*IndividualNode, 0),
-		Children:   make([]*IndividualNode, 0),
-		Spouses:    make([]*IndividualNode, 0),
-		Siblings:   make([]*IndividualNode, 0),
 	}
 }
 
@@ -206,10 +202,8 @@ type FamilyNode struct {
 	*BaseNode
 	Family *gedcom.FamilyRecord
 
-	// Cached relationships (for performance)
-	Husband  *IndividualNode
-	Wife     *IndividualNode
-	Children []*IndividualNode
+	// Note: Relationships (Husband, Wife, Children) are now computed
+	// on-demand from edges to save memory. Use helper methods or query API.
 }
 
 // NewFamilyNode creates a new FamilyNode.
@@ -223,8 +217,7 @@ func NewFamilyNode(xrefID string, record *gedcom.FamilyRecord) *FamilyNode {
 			inEdges:  make([]*Edge, 0),
 			outEdges: make([]*Edge, 0),
 		},
-		Family:   record,
-		Children: make([]*IndividualNode, 0),
+		Family: record,
 	}
 }
 

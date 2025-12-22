@@ -12,11 +12,25 @@ type QueryBuilder struct {
 }
 
 // NewQuery creates a new query builder from a GEDCOM tree.
-// It builds the graph automatically.
+// It builds the graph automatically (eager loading).
 func NewQuery(tree *gedcom.GedcomTree) (*QueryBuilder, error) {
 	graph, err := BuildGraph(tree)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build graph: %w", err)
+	}
+
+	return &QueryBuilder{
+		graph: graph,
+	}, nil
+}
+
+// NewQueryLazy creates a new query builder with lazy loading enabled.
+// Nodes and edges are loaded on-demand when accessed.
+// This is more memory-efficient for large datasets.
+func NewQueryLazy(tree *gedcom.GedcomTree) (*QueryBuilder, error) {
+	graph, err := BuildGraphLazy(tree)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build lazy graph: %w", err)
 	}
 
 	return &QueryBuilder{
@@ -123,8 +137,10 @@ func (iq *IndividualQuery) Parents() ([]*gedcom.IndividualRecord, error) {
 		return nil, fmt.Errorf("individual %s not found", iq.xrefID)
 	}
 
-	parents := make([]*gedcom.IndividualRecord, 0, len(node.Parents))
-	for _, parentNode := range node.Parents {
+	// Compute parents from edges (no longer cached in node)
+	parentNodes := node.getParentsFromEdges()
+	parents := make([]*gedcom.IndividualRecord, 0, len(parentNodes))
+	for _, parentNode := range parentNodes {
 		if parentNode.Individual != nil {
 			parents = append(parents, parentNode.Individual)
 		}
@@ -152,8 +168,10 @@ func (iq *IndividualQuery) Children() ([]*gedcom.IndividualRecord, error) {
 		return nil, fmt.Errorf("individual %s not found", iq.xrefID)
 	}
 
-	children := make([]*gedcom.IndividualRecord, 0, len(node.Children))
-	for _, childNode := range node.Children {
+	// Compute children from edges (no longer cached in node)
+	childNodes := node.getChildrenFromEdges()
+	children := make([]*gedcom.IndividualRecord, 0, len(childNodes))
+	for _, childNode := range childNodes {
 		if childNode.Individual != nil {
 			children = append(children, childNode.Individual)
 		}
@@ -167,34 +185,60 @@ func (iq *IndividualQuery) Children() ([]*gedcom.IndividualRecord, error) {
 
 // Siblings returns siblings (full and half).
 func (iq *IndividualQuery) Siblings() ([]*gedcom.IndividualRecord, error) {
+	// Check cache
+	cacheKey := makeCacheKey("siblings", iq.xrefID)
+	if cached, ok := iq.graph.cache.get(cacheKey); ok {
+		if result, ok := cached.([]*gedcom.IndividualRecord); ok {
+			return result, nil
+		}
+	}
+
 	node := iq.graph.GetIndividual(iq.xrefID)
 	if node == nil {
 		return nil, fmt.Errorf("individual %s not found", iq.xrefID)
 	}
 
-	siblings := make([]*gedcom.IndividualRecord, 0, len(node.Siblings))
-	for _, siblingNode := range node.Siblings {
+	// Compute siblings from edges (no longer cached in node)
+	siblingNodes := node.getSiblingsFromEdges()
+	siblings := make([]*gedcom.IndividualRecord, 0, len(siblingNodes))
+	for _, siblingNode := range siblingNodes {
 		if siblingNode.Individual != nil {
 			siblings = append(siblings, siblingNode.Individual)
 		}
 	}
+
+	// Cache result
+	iq.graph.cache.set(cacheKey, siblings)
 
 	return siblings, nil
 }
 
 // Spouses returns all spouses.
 func (iq *IndividualQuery) Spouses() ([]*gedcom.IndividualRecord, error) {
+	// Check cache
+	cacheKey := makeCacheKey("spouses", iq.xrefID)
+	if cached, ok := iq.graph.cache.get(cacheKey); ok {
+		if result, ok := cached.([]*gedcom.IndividualRecord); ok {
+			return result, nil
+		}
+	}
+
 	node := iq.graph.GetIndividual(iq.xrefID)
 	if node == nil {
 		return nil, fmt.Errorf("individual %s not found", iq.xrefID)
 	}
 
-	spouses := make([]*gedcom.IndividualRecord, 0, len(node.Spouses))
-	for _, spouseNode := range node.Spouses {
+	// Compute spouses from edges (no longer cached in node)
+	spouseNodes := node.getSpousesFromEdges()
+	spouses := make([]*gedcom.IndividualRecord, 0, len(spouseNodes))
+	for _, spouseNode := range spouseNodes {
 		if spouseNode.Individual != nil {
 			spouses = append(spouses, spouseNode.Individual)
 		}
 	}
+
+	// Cache result
+	iq.graph.cache.set(cacheKey, spouses)
 
 	return spouses, nil
 }
@@ -281,7 +325,8 @@ func (iq *IndividualQuery) Uncles() ([]*gedcom.IndividualRecord, error) {
 			continue
 		}
 
-		for _, siblingNode := range parentQuery.Siblings {
+		siblingNodes := parentQuery.getSiblingsFromEdges()
+		for _, siblingNode := range siblingNodes {
 			// Exclude the parent itself
 			if siblingNode.ID() != parent.XrefID() && siblingNode.Individual != nil {
 				uncles = append(uncles, siblingNode.Individual)
@@ -307,7 +352,8 @@ func (iq *IndividualQuery) Nephews() ([]*gedcom.IndividualRecord, error) {
 			continue
 		}
 
-		for _, childNode := range siblingNode.Children {
+		childNodes := siblingNode.getChildrenFromEdges()
+		for _, childNode := range childNodes {
 			if childNode.Individual != nil {
 				nephews = append(nephews, childNode.Individual)
 			}
@@ -331,7 +377,8 @@ func (iq *IndividualQuery) Grandparents() ([]*gedcom.IndividualRecord, error) {
 			continue
 		}
 
-		for _, grandparentNode := range parentNode.Parents {
+		grandparentNodes := parentNode.getParentsFromEdges()
+		for _, grandparentNode := range grandparentNodes {
 			if grandparentNode.Individual != nil {
 				grandparents = append(grandparents, grandparentNode.Individual)
 			}
@@ -355,7 +402,8 @@ func (iq *IndividualQuery) Grandchildren() ([]*gedcom.IndividualRecord, error) {
 			continue
 		}
 
-		for _, grandchildNode := range childNode.Children {
+		grandchildNodes := childNode.getChildrenFromEdges()
+		for _, grandchildNode := range grandchildNodes {
 			if grandchildNode.Individual != nil {
 				grandchildren = append(grandchildren, grandchildNode.Individual)
 			}

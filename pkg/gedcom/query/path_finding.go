@@ -9,8 +9,10 @@ func (g *Graph) ShortestPath(fromID, toID string) (*Path, error) {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 
-	fromNode := g.nodes[fromID]
-	toNode := g.nodes[toID]
+	fromInternalID := g.GetNodeID(fromID)
+	toInternalID := g.GetNodeID(toID)
+	fromNode := g.nodes[fromInternalID]
+	toNode := g.nodes[toInternalID]
 
 	if fromNode == nil {
 		return nil, fmt.Errorf("node %s not found", fromID)
@@ -231,8 +233,10 @@ func (g *Graph) AllPaths(fromID, toID string, maxLength int) ([]*Path, error) {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 
-	fromNode := g.nodes[fromID]
-	toNode := g.nodes[toID]
+	fromInternalID := g.GetNodeID(fromID)
+	toInternalID := g.GetNodeID(toID)
+	fromNode := g.nodes[fromInternalID]
+	toNode := g.nodes[toInternalID]
 
 	if fromNode == nil {
 		return nil, fmt.Errorf("node %s not found", fromID)

@@ -1,0 +1,30 @@
+name: Tests with Timeout
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Run tests with timeout
+      run: |
+        # Run all tests with 2-minute timeout
+        go test -timeout 2m -v ./...
+        
+        # Check for any tests that might have timed out
+        if [ $? -ne 0 ]; then
+          echo "Some tests failed or timed out"
+          exit 1
+        fi
+

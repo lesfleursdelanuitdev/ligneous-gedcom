@@ -96,7 +96,8 @@ func (dq *DescendantQuery) findDescendants(node *IndividualNode, descendants map
 	for _, edge := range node.OutEdges() {
 		if edge.EdgeType == EdgeTypeFAMS && edge.Family != nil {
 			famNode := edge.Family
-			for _, childNode := range famNode.Children {
+			children := famNode.getChildrenFromEdges()
+			for _, childNode := range children {
 				descendants[childNode.ID()] = childNode
 				dq.findDescendants(childNode, descendants, visited, depth+1)
 			}

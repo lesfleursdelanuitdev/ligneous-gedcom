@@ -90,15 +90,8 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Build graph
+	// Build graph and create query builder
 	internal.PrintInfo("ℹ Building graph...\n")
-	graph, err := query.BuildGraph(tree)
-	if err != nil {
-		internal.PrintError("✗ Graph build failed: %v\n", err)
-		return err
-	}
-
-	// Create query builder
 	qb, err := query.NewQuery(tree)
 	if err != nil {
 		internal.PrintError("✗ Query builder failed: %v\n", err)
@@ -112,22 +105,16 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	if name, _ := cmd.Flags().GetString("name"); name != "" {
 		filterQuery = filterQuery.ByName(name)
 	} else if name, _ := cmd.Flags().GetString("name-exact"); name != "" {
-		// Exact match - need to add custom filter
-		filterQuery = filterQuery.Where(func(indi *gedcom.IndividualRecord) bool {
-			return indi.GetName() == name
-		})
+		filterQuery = filterQuery.ByNameExact(name)
 	} else if name, _ := cmd.Flags().GetString("name-starts"); name != "" {
-		filterQuery = filterQuery.Where(func(indi *gedcom.IndividualRecord) bool {
-			return strings.HasPrefix(strings.ToLower(indi.GetName()), strings.ToLower(name))
-		})
+		filterQuery = filterQuery.ByNameStarts(name)
 	} else if name, _ := cmd.Flags().GetString("name-ends"); name != "" {
-		filterQuery = filterQuery.Where(func(indi *gedcom.IndividualRecord) bool {
-			return strings.HasSuffix(strings.ToLower(indi.GetName()), strings.ToLower(name))
-		})
+		filterQuery = filterQuery.ByNameEnds(name)
 	}
 
 	// Apply birth date filters
-	if err := applyBirthDateFilters(cmd, filterQuery); err != nil {
+	filterQuery, err = applyBirthDateFilters(cmd, filterQuery)
+	if err != nil {
 		return err
 	}
 
@@ -155,16 +142,10 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		filterQuery = filterQuery.HasSpouse()
 	}
 	if noChildren, _ := cmd.Flags().GetBool("no-children"); noChildren {
-		filterQuery = filterQuery.Where(func(indi *gedcom.IndividualRecord) bool {
-			node := graph.GetIndividual(indi.XrefID())
-			return node != nil && len(node.Children) == 0
-		})
+		filterQuery = filterQuery.NoChildren()
 	}
 	if noSpouse, _ := cmd.Flags().GetBool("no-spouse"); noSpouse {
-		filterQuery = filterQuery.Where(func(indi *gedcom.IndividualRecord) bool {
-			node := graph.GetIndividual(indi.XrefID())
-			return node != nil && len(node.Spouses) == 0
-		})
+		filterQuery = filterQuery.NoSpouse()
 	}
 
 	// Execute query
@@ -219,41 +200,32 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func applyBirthDateFilters(cmd *cobra.Command, filterQuery *query.FilterQuery) error {
+func applyBirthDateFilters(cmd *cobra.Command, filterQuery *query.FilterQuery) (*query.FilterQuery, error) {
 	// Check birth-year first (shorthand)
 	if yearStr, _ := cmd.Flags().GetString("birth-year"); yearStr != "" {
 		year, err := strconv.Atoi(yearStr)
 		if err != nil {
-			return fmt.Errorf("invalid birth year: %s", yearStr)
+			return filterQuery, fmt.Errorf("invalid birth year: %s", yearStr)
 		}
-		start := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
-		end := time.Date(year, 12, 31, 23, 59, 59, 999999999, time.UTC)
-		filterQuery.ByBirthDate(start, end)
-		return nil
+		return filterQuery.ByBirthYear(year), nil
 	}
 
 	// Check birth-date-before
 	if beforeStr, _ := cmd.Flags().GetString("birth-date-before"); beforeStr != "" {
 		year, err := strconv.Atoi(beforeStr)
 		if err != nil {
-			return fmt.Errorf("invalid year: %s", beforeStr)
+			return filterQuery, fmt.Errorf("invalid year: %s", beforeStr)
 		}
-		end := time.Date(year, 12, 31, 23, 59, 59, 999999999, time.UTC)
-		start := time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC) // Very early date
-		filterQuery.ByBirthDate(start, end)
-		return nil
+		return filterQuery.ByBirthDateBefore(year), nil
 	}
 
 	// Check birth-date-after
 	if afterStr, _ := cmd.Flags().GetString("birth-date-after"); afterStr != "" {
 		year, err := strconv.Atoi(afterStr)
 		if err != nil {
-			return fmt.Errorf("invalid year: %s", afterStr)
+			return filterQuery, fmt.Errorf("invalid year: %s", afterStr)
 		}
-		start := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
-		end := time.Date(9999, 12, 31, 23, 59, 59, 999999999, time.UTC) // Very late date
-		filterQuery.ByBirthDate(start, end)
-		return nil
+		return filterQuery.ByBirthDateAfter(year), nil
 	}
 
 	// Check birth-date (range or single year)
@@ -267,24 +239,20 @@ func applyBirthDateFilters(cmd *cobra.Command, filterQuery *query.FilterQuery) e
 				if err1 == nil && err2 == nil {
 					start := time.Date(startYear, 1, 1, 0, 0, 0, 0, time.UTC)
 					end := time.Date(endYear, 12, 31, 23, 59, 59, 999999999, time.UTC)
-					filterQuery.ByBirthDate(start, end)
-					return nil
+					return filterQuery.ByBirthDate(start, end), nil
 				}
 			}
 		}
 
 		// Try to parse as single year
 		if year, err := strconv.Atoi(dateStr); err == nil {
-			start := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
-			end := time.Date(year, 12, 31, 23, 59, 59, 999999999, time.UTC)
-			filterQuery.ByBirthDate(start, end)
-			return nil
+			return filterQuery.ByBirthYear(year), nil
 		}
 
-		return fmt.Errorf("invalid birth date format: %s (use YYYY or YYYY-YYYY)", dateStr)
+		return filterQuery, fmt.Errorf("invalid birth date format: %s (use YYYY or YYYY-YYYY)", dateStr)
 	}
 
-	return nil
+	return filterQuery, nil
 }
 
 func sortResults(results []*gedcom.IndividualRecord, sortField string, desc bool) {

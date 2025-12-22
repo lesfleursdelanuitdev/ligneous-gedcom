@@ -238,14 +238,17 @@ func (gmq *GraphMetricsQuery) ConnectedComponents() ([][]*gedcom.IndividualRecor
 			for _, edge := range current.OutEdges() {
 				if edge.EdgeType == EdgeTypeFAMC && edge.Family != nil {
 					famNode := edge.Family
-					if famNode.Husband != nil {
-						connectedIndividuals[famNode.Husband.ID()] = famNode.Husband
+					husband := famNode.getHusbandFromEdges()
+					if husband != nil {
+						connectedIndividuals[husband.ID()] = husband
 					}
-					if famNode.Wife != nil {
-						connectedIndividuals[famNode.Wife.ID()] = famNode.Wife
+					wife := famNode.getWifeFromEdges()
+					if wife != nil {
+						connectedIndividuals[wife.ID()] = wife
 					}
 					// Also add siblings (other children of same family)
-					for _, child := range famNode.Children {
+					children := famNode.getChildrenFromEdges()
+					for _, child := range children {
 						if child.ID() != current.ID() {
 							connectedIndividuals[child.ID()] = child
 						}
@@ -257,13 +260,16 @@ func (gmq *GraphMetricsQuery) ConnectedComponents() ([][]*gedcom.IndividualRecor
 			for _, edge := range current.OutEdges() {
 				if edge.EdgeType == EdgeTypeFAMS && edge.Family != nil {
 					famNode := edge.Family
-					if famNode.Husband != nil && famNode.Husband.ID() != current.ID() {
-						connectedIndividuals[famNode.Husband.ID()] = famNode.Husband
+					husband := famNode.getHusbandFromEdges()
+					if husband != nil && husband.ID() != current.ID() {
+						connectedIndividuals[husband.ID()] = husband
 					}
-					if famNode.Wife != nil && famNode.Wife.ID() != current.ID() {
-						connectedIndividuals[famNode.Wife.ID()] = famNode.Wife
+					wife := famNode.getWifeFromEdges()
+					if wife != nil && wife.ID() != current.ID() {
+						connectedIndividuals[wife.ID()] = wife
 					}
-					for _, child := range famNode.Children {
+					children := famNode.getChildrenFromEdges()
+					for _, child := range children {
 						connectedIndividuals[child.ID()] = child
 					}
 				}

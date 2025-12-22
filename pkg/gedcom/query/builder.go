@@ -22,7 +22,9 @@ func BuildGraph(tree *gedcom.GedcomTree) (*Graph, error) {
 	}
 
 	// Phase 2: Build cached relationships
-	buildCachedRelationships(graph)
+	// Note: Relationships are now computed on-demand from edges to save memory.
+	// This phase is no longer needed, but kept for potential future optimizations.
+	// buildCachedRelationships(graph) // Removed - relationships computed on-demand
 
 	// Phase 3: Build indexes for fast filtering
 	graph.indexes.buildIndexes(graph)
@@ -513,82 +515,9 @@ func createEventNodesAndEdges(graph *Graph, tree *gedcom.GedcomTree) error {
 	return nil
 }
 
-// buildCachedRelationships builds cached relationships for performance.
-func buildCachedRelationships(graph *Graph) {
-	// First, build cached relationships for FamilyNodes (needed for IndividualNodes)
-	families := graph.GetAllFamilies()
-	for _, famNode := range families {
-		// Set husband and wife from edges
-		for _, edge := range famNode.OutEdges() {
-			if edge.EdgeType == EdgeTypeHUSB {
-				if indiNode, ok := edge.To.(*IndividualNode); ok {
-					famNode.Husband = indiNode
-				}
-			}
-			if edge.EdgeType == EdgeTypeWIFE {
-				if indiNode, ok := edge.To.(*IndividualNode); ok {
-					famNode.Wife = indiNode
-				}
-			}
-			if edge.EdgeType == EdgeTypeCHIL {
-				if indiNode, ok := edge.To.(*IndividualNode); ok {
-					famNode.Children = append(famNode.Children, indiNode)
-				}
-			}
-		}
-	}
-
-	// Then, build cached relationships for IndividualNodes
-	individuals := graph.GetAllIndividuals()
-	for _, indiNode := range individuals {
-		// Find parents via FAMC edges
-		for _, edge := range indiNode.OutEdges() {
-			if edge.EdgeType == EdgeTypeFAMC && edge.Family != nil {
-				// Get parents from the family
-				famNode := edge.Family
-				if famNode.Husband != nil {
-					indiNode.Parents = append(indiNode.Parents, famNode.Husband)
-				}
-				if famNode.Wife != nil {
-					indiNode.Parents = append(indiNode.Parents, famNode.Wife)
-				}
-			}
-		}
-
-		// Find children via FAMS -> Family -> CHIL edges
-		for _, edge := range indiNode.OutEdges() {
-			if edge.EdgeType == EdgeTypeFAMS && edge.Family != nil {
-				famNode := edge.Family
-				indiNode.Children = append(indiNode.Children, famNode.Children...)
-			}
-		}
-
-		// Find spouses via FAMS edges
-		for _, edge := range indiNode.OutEdges() {
-			if edge.EdgeType == EdgeTypeFAMS && edge.Family != nil {
-				famNode := edge.Family
-				if famNode.Husband != nil && famNode.Husband.ID() != indiNode.ID() {
-					indiNode.Spouses = append(indiNode.Spouses, famNode.Husband)
-				}
-				if famNode.Wife != nil && famNode.Wife.ID() != indiNode.ID() {
-					indiNode.Spouses = append(indiNode.Spouses, famNode.Wife)
-				}
-			}
-		}
-
-		// Find siblings via shared FAMC
-		parentFamilies := make(map[string]*FamilyNode)
-		for _, edge := range indiNode.OutEdges() {
-			if edge.EdgeType == EdgeTypeFAMC && edge.Family != nil {
-				parentFamilies[edge.Family.ID()] = edge.Family
-			}
-		}
-		for _, famNode := range parentFamilies {
-			for _, child := range famNode.Children {
-				if child.ID() != indiNode.ID() {
-					indiNode.Siblings = append(indiNode.Siblings, child)
-				}
-			}
-		}
-	}
-}
+// buildCachedRelationships is no longer used.
+// Relationships are now computed on-demand from edges to save memory.
+// This function is kept for reference but not called.
+// func buildCachedRelationships(graph *Graph) {
+// 	// Removed - relationships computed on-demand via helper methods
+// }

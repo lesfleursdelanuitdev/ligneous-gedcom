@@ -209,6 +209,9 @@ func executor(in string) {
 		}
 		searchByName(strings.Join(args, " "))
 
+	case "filter":
+		runFilter(args)
+
 	case "parents":
 		if len(args) == 0 {
 			internal.PrintError("Usage: parents <xref>\n")
@@ -288,6 +291,7 @@ func completer(d prompt.Document) []prompt.Suggest {
 		{Text: "individual", Description: "Show individual details"},
 		{Text: "family", Description: "Show family details"},
 		{Text: "search", Description: "Search by name"},
+		{Text: "filter", Description: "Advanced search with filters"},
 		{Text: "parents", Description: "Show parents"},
 		{Text: "children", Description: "Show children"},
 		{Text: "siblings", Description: "Show siblings"},
@@ -308,7 +312,9 @@ func printHelp() {
 	internal.PrintInfo("Individual Commands:\n")
 	internal.PrintInfo("  individual <xref>          Show individual details\n")
 	internal.PrintInfo("  family <xref>              Show family details\n")
-	internal.PrintInfo("  search <name>              Search individuals by name\n\n")
+	internal.PrintInfo("  search <name>              Search individuals by name\n")
+	internal.PrintInfo("  filter [options]           Advanced search with filters\n")
+	internal.PrintInfo("                            (type 'filter' for options)\n\n")
 	internal.PrintInfo("Relationship Commands:\n")
 	internal.PrintInfo("  parents <xref>             Show parents\n")
 	internal.PrintInfo("  children <xref>            Show children\n")
@@ -400,33 +406,228 @@ func showFamily(xref string) {
 }
 
 func searchByName(name string) {
-	if state == nil || state.tree == nil {
-		internal.PrintError("No data loaded\n")
+	if state == nil || state.query == nil {
+		internal.PrintError("No data loaded or graph not built. Use --no-graph=false\n")
 		return
 	}
 
-	individuals := state.tree.GetAllIndividuals()
-	nameLower := strings.ToLower(name)
-	found := 0
+	// Use Query API for indexed search
+	results, err := state.query.Filter().ByName(name).Execute()
+	if err != nil {
+		internal.PrintError("Search error: %v\n", err)
+		return
+	}
 
 	internal.PrintInfo("\nSearch results for '%s':\n", name)
-	for xref, record := range individuals {
-		indi, ok := record.(*gedcom.IndividualRecord)
-		if !ok {
-			continue
-		}
-		if strings.Contains(strings.ToLower(indi.GetName()), nameLower) {
-			internal.PrintInfo("  %s: %s\n", xref, indi.GetName())
-			found++
-			if found >= 20 {
-				internal.PrintInfo("  ... (showing first 20 results)\n")
-				break
+	if len(results) == 0 {
+		internal.PrintWarning("No matches found\n")
+		internal.PrintInfo("\n")
+		return
+	}
+
+	// Show first 20 results
+	maxResults := 20
+	if len(results) < maxResults {
+		maxResults = len(results)
+	}
+
+	for i := 0; i < maxResults; i++ {
+		indi := results[i]
+		internal.PrintInfo("  %s: %s\n", indi.XrefID(), indi.GetName())
+	}
+
+	if len(results) > maxResults {
+		internal.PrintInfo("  ... (showing first %d of %d results)\n", maxResults, len(results))
+	}
+	internal.PrintInfo("\n")
+}
+
+func runFilter(args []string) {
+	if state == nil || state.query == nil {
+		internal.PrintError("No data loaded or graph not built. Use --no-graph=false\n")
+		return
+	}
+
+	if len(args) == 0 {
+		internal.PrintError("Usage: filter [options]\n")
+		internal.PrintInfo("Options:\n")
+		internal.PrintInfo("  --name <pattern>          Search by name (contains)\n")
+		internal.PrintInfo("  --name-exact <name>        Search by exact name\n")
+		internal.PrintInfo("  --name-starts <prefix>     Search by name starting with\n")
+		internal.PrintInfo("  --name-ends <suffix>       Search by name ending with\n")
+		internal.PrintInfo("  --birth-year <year>        Birth year\n")
+		internal.PrintInfo("  --birth-date-before <year> Born before year\n")
+		internal.PrintInfo("  --birth-date-after <year>  Born after year\n")
+		internal.PrintInfo("  --birth-place <place>      Birth place\n")
+		internal.PrintInfo("  --sex <M|F|U>             Sex\n")
+		internal.PrintInfo("  --living                  Living individuals\n")
+		internal.PrintInfo("  --deceased                Deceased individuals\n")
+		internal.PrintInfo("  --has-children             Has children\n")
+		internal.PrintInfo("  --no-children              No children\n")
+		internal.PrintInfo("  --has-spouse               Has spouse\n")
+		internal.PrintInfo("  --no-spouse                No spouse\n")
+		internal.PrintInfo("  --limit <n>                Limit results (default: 20)\n")
+		internal.PrintInfo("\nExample: filter --name John --sex M --living\n")
+		return
+	}
+
+	// Build filter query
+	filterQuery := state.query.Filter()
+	limit := 20
+
+	// Parse arguments (simple flag parser)
+	i := 0
+	for i < len(args) {
+		arg := args[i]
+		switch arg {
+		case "--name":
+			if i+1 >= len(args) {
+				internal.PrintError("Error: --name requires a value\n")
+				return
 			}
+			filterQuery = filterQuery.ByName(args[i+1])
+			i += 2
+		case "--name-exact":
+			if i+1 >= len(args) {
+				internal.PrintError("Error: --name-exact requires a value\n")
+				return
+			}
+			filterQuery = filterQuery.ByNameExact(args[i+1])
+			i += 2
+		case "--name-starts":
+			if i+1 >= len(args) {
+				internal.PrintError("Error: --name-starts requires a value\n")
+				return
+			}
+			filterQuery = filterQuery.ByNameStarts(args[i+1])
+			i += 2
+		case "--name-ends":
+			if i+1 >= len(args) {
+				internal.PrintError("Error: --name-ends requires a value\n")
+				return
+			}
+			filterQuery = filterQuery.ByNameEnds(args[i+1])
+			i += 2
+		case "--birth-year":
+			if i+1 >= len(args) {
+				internal.PrintError("Error: --birth-year requires a value\n")
+				return
+			}
+			var year int
+			if _, err := fmt.Sscanf(args[i+1], "%d", &year); err != nil {
+				internal.PrintError("Error: invalid year: %s\n", args[i+1])
+				return
+			}
+			filterQuery = filterQuery.ByBirthYear(year)
+			i += 2
+		case "--birth-date-before":
+			if i+1 >= len(args) {
+				internal.PrintError("Error: --birth-date-before requires a value\n")
+				return
+			}
+			var year int
+			if _, err := fmt.Sscanf(args[i+1], "%d", &year); err != nil {
+				internal.PrintError("Error: invalid year: %s\n", args[i+1])
+				return
+			}
+			filterQuery = filterQuery.ByBirthDateBefore(year)
+			i += 2
+		case "--birth-date-after":
+			if i+1 >= len(args) {
+				internal.PrintError("Error: --birth-date-after requires a value\n")
+				return
+			}
+			var year int
+			if _, err := fmt.Sscanf(args[i+1], "%d", &year); err != nil {
+				internal.PrintError("Error: invalid year: %s\n", args[i+1])
+				return
+			}
+			filterQuery = filterQuery.ByBirthDateAfter(year)
+			i += 2
+		case "--birth-place":
+			if i+1 >= len(args) {
+				internal.PrintError("Error: --birth-place requires a value\n")
+				return
+			}
+			filterQuery = filterQuery.ByBirthPlace(args[i+1])
+			i += 2
+		case "--sex":
+			if i+1 >= len(args) {
+				internal.PrintError("Error: --sex requires a value\n")
+				return
+			}
+			filterQuery = filterQuery.BySex(args[i+1])
+			i += 2
+		case "--living":
+			filterQuery = filterQuery.Living()
+			i++
+		case "--deceased":
+			filterQuery = filterQuery.Deceased()
+			i++
+		case "--has-children":
+			filterQuery = filterQuery.HasChildren()
+			i++
+		case "--no-children":
+			filterQuery = filterQuery.NoChildren()
+			i++
+		case "--has-spouse":
+			filterQuery = filterQuery.HasSpouse()
+			i++
+		case "--no-spouse":
+			filterQuery = filterQuery.NoSpouse()
+			i++
+		case "--limit":
+			if i+1 >= len(args) {
+				internal.PrintError("Error: --limit requires a value\n")
+				return
+			}
+			if _, err := fmt.Sscanf(args[i+1], "%d", &limit); err != nil {
+				internal.PrintError("Error: invalid limit: %s\n", args[i+1])
+				return
+			}
+			i += 2
+		default:
+			internal.PrintError("Error: unknown option: %s\n", arg)
+			internal.PrintInfo("Type 'filter' for usage\n")
+			return
 		}
 	}
 
-	if found == 0 {
+	// Execute query
+	results, err := filterQuery.Execute()
+	if err != nil {
+		internal.PrintError("Filter error: %v\n", err)
+		return
+	}
+
+	// Display results
+	internal.PrintInfo("\nFilter results:\n")
+	if len(results) == 0 {
 		internal.PrintWarning("No matches found\n")
+		internal.PrintInfo("\n")
+		return
+	}
+
+	totalCount := len(results)
+	maxResults := limit
+	if totalCount < maxResults {
+		maxResults = totalCount
+	}
+
+	for i := 0; i < maxResults; i++ {
+		indi := results[i]
+		internal.PrintInfo("  %s: %s", indi.XrefID(), indi.GetName())
+		if indi.GetSex() != "" {
+			internal.PrintInfo(" (%s)", indi.GetSex())
+		}
+		if birthDate := indi.GetBirthDate(); birthDate != "" {
+			internal.PrintInfo(" b. %s", birthDate)
+		}
+		internal.PrintInfo("\n")
+	}
+
+	if totalCount > maxResults {
+		internal.PrintInfo("  ... (showing first %d of %d results)\n", maxResults, totalCount)
 	}
 	internal.PrintInfo("\n")
 }

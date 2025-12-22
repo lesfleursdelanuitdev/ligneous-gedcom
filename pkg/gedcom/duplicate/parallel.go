@@ -22,9 +22,9 @@ type comparisonResult struct {
 }
 
 // findDuplicatesParallel finds duplicates using parallel processing.
-func (dd *DuplicateDetector) findDuplicatesParallel(individuals []*gedcom.IndividualRecord) ([]DuplicateMatch, int, error) {
+func (dd *DuplicateDetector) findDuplicatesParallel(individuals []*gedcom.IndividualRecord) ([]DuplicateMatch, int, *BlockingMetrics, error) {
 	if len(individuals) < 2 {
-		return []DuplicateMatch{}, 0, nil
+		return []DuplicateMatch{}, 0, nil, nil
 	}
 
 	// Determine number of workers
@@ -33,13 +33,11 @@ func (dd *DuplicateDetector) findDuplicatesParallel(individuals []*gedcom.Indivi
 		numWorkers = len(individuals)
 	}
 
-	// Build indexes for pre-filtering
-	indexes := dd.buildIndexes(individuals)
-
-	// Generate comparison jobs
-	jobs := dd.generateComparisonJobs(individuals, indexes)
+	// Use blocking-based candidate generation (much faster than O(n²))
+	// This replaces the old index-based approach with proper blocking
+	jobs, blockingMetrics := dd.generateBlockedComparisonJobs(individuals)
 	if len(jobs) == 0 {
-		return []DuplicateMatch{}, 0, nil
+		return []DuplicateMatch{}, 0, blockingMetrics, nil
 	}
 
 	// Limit comparisons if configured
@@ -91,7 +89,7 @@ func (dd *DuplicateDetector) findDuplicatesParallel(individuals []*gedcom.Indivi
 		matches = append(matches, *result.match)
 	}
 
-	return matches, comparisonCount, nil
+	return matches, comparisonCount, blockingMetrics, nil
 }
 
 // worker processes comparison jobs.

@@ -25,8 +25,10 @@ type DuplicateConfig struct {
 	UsePhoneticMatching   bool // Use Soundex/Metaphone (default: true for Phase 2)
 	UseRelationshipData   bool // Use family relationships (default: true for Phase 2)
 	UseParallelProcessing bool // Use parallel processing (default: true for Phase 3)
+	UseBlocking           bool // Use blocking for candidate generation (default: true)
 	DateTolerance         int  // Years tolerance for dates (default: 2)
 	MaxComparisons        int  // Limit comparisons for performance (0 = unlimited)
+	MaxCandidatesPerPerson int // Max candidates per person when blocking (default: 200)
 	NumWorkers            int  // Number of worker goroutines (0 = auto-detect)
 }
 
@@ -44,8 +46,10 @@ func DefaultConfig() *DuplicateConfig {
 		UsePhoneticMatching:     true, // Phase 2: enabled
 		UseRelationshipData:     true, // Phase 2: enabled
 		UseParallelProcessing:   true, // Phase 3: enabled
+		UseBlocking:             true, // Use blocking for O(n²) -> O(n) reduction
 		DateTolerance:           2,
 		MaxComparisons:          0, // Unlimited
+		MaxCandidatesPerPerson:  200, // Max candidates per person when blocking
 		NumWorkers:              0, // Auto-detect
 	}
 }
@@ -73,6 +77,7 @@ type DuplicateResult struct {
 	TotalComparisons int
 	ProcessingTime   time.Duration
 	Metrics          *PerformanceMetrics // Optional performance metrics
+	BlockingMetrics  *BlockingMetrics   // Optional blocking metrics
 }
 
 // DuplicateDetector detects potential duplicate individuals.
@@ -132,21 +137,24 @@ func (dd *DuplicateDetector) FindDuplicates(tree *gedcom.GedcomTree) (*Duplicate
 	var numWorkers int
 	comparisonStartTime := time.Now()
 
+	var blockingMetrics *BlockingMetrics
 	if dd.config.UseParallelProcessing && len(individuals) > 10 {
 		// Use parallel processing for larger datasets
 		numWorkers = dd.getNumWorkers()
-		matches, comparisonCount, err = dd.findDuplicatesParallel(individuals)
+		matches, comparisonCount, blockingMetrics, err = dd.findDuplicatesParallel(individuals)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		// Use sequential processing for small datasets
 		numWorkers = 1
-		matches, comparisonCount, err = dd.findDuplicatesSequential(individuals)
+		matches, comparisonCount, blockingMetrics, err = dd.findDuplicatesSequential(individuals)
 		if err != nil {
 			return nil, err
 		}
 	}
+	
+	// blockingMetrics is now available for attachment to result
 	comparisonTime := time.Since(comparisonStartTime)
 
 	// Sort by similarity score (descending)
@@ -170,6 +178,7 @@ func (dd *DuplicateDetector) FindDuplicates(tree *gedcom.GedcomTree) (*Duplicate
 		TotalComparisons: comparisonCount,
 		ProcessingTime:   time.Since(startTime),
 		Metrics:          metrics,
+		BlockingMetrics:  blockingMetrics,
 	}, nil
 }
 

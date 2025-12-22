@@ -104,13 +104,15 @@ func (aq *AncestorQuery) findAncestors(node *IndividualNode, ancestors map[strin
 	for _, edge := range node.OutEdges() {
 		if edge.EdgeType == EdgeTypeFAMC && edge.Family != nil {
 			famNode := edge.Family
-			if famNode.Husband != nil {
-				ancestors[famNode.Husband.ID()] = famNode.Husband
-				aq.findAncestors(famNode.Husband, ancestors, visited, depth+1)
+			husband := famNode.getHusbandFromEdges()
+			if husband != nil {
+				ancestors[husband.ID()] = husband
+				aq.findAncestors(husband, ancestors, visited, depth+1)
 			}
-			if famNode.Wife != nil {
-				ancestors[famNode.Wife.ID()] = famNode.Wife
-				aq.findAncestors(famNode.Wife, ancestors, visited, depth+1)
+			wife := famNode.getWifeFromEdges()
+			if wife != nil {
+				ancestors[wife.ID()] = wife
+				aq.findAncestors(wife, ancestors, visited, depth+1)
 			}
 		}
 	}
@@ -200,15 +202,17 @@ func (aq *AncestorQuery) findAncestorsWithDepth(node *IndividualNode, ancestors 
 	for _, edge := range node.OutEdges() {
 		if edge.EdgeType == EdgeTypeFAMC && edge.Family != nil {
 			famNode := edge.Family
-			if famNode.Husband != nil {
-				ancestors[famNode.Husband.ID()] = famNode.Husband
-				depths[famNode.Husband.ID()] = depth + 1
-				aq.findAncestorsWithDepth(famNode.Husband, ancestors, visited, depths, depth+1)
+			husband := famNode.getHusbandFromEdges()
+			if husband != nil {
+				ancestors[husband.ID()] = husband
+				depths[husband.ID()] = depth + 1
+				aq.findAncestorsWithDepth(husband, ancestors, visited, depths, depth+1)
 			}
-			if famNode.Wife != nil {
-				ancestors[famNode.Wife.ID()] = famNode.Wife
-				depths[famNode.Wife.ID()] = depth + 1
-				aq.findAncestorsWithDepth(famNode.Wife, ancestors, visited, depths, depth+1)
+			wife := famNode.getWifeFromEdges()
+			if wife != nil {
+				ancestors[wife.ID()] = wife
+				depths[wife.ID()] = depth + 1
+				aq.findAncestorsWithDepth(wife, ancestors, visited, depths, depth+1)
 			}
 		}
 	}

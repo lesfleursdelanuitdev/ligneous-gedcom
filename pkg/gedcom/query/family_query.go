@@ -19,11 +19,12 @@ func (fq *FamilyQuery) Husband() (*gedcom.IndividualRecord, error) {
 		return nil, fmt.Errorf("family %s not found", fq.xrefID)
 	}
 
-	if famNode.Husband == nil {
+	husband := famNode.getHusbandFromEdges()
+	if husband == nil {
 		return nil, nil // No husband
 	}
 
-	return famNode.Husband.Individual, nil
+	return husband.Individual, nil
 }
 
 // Wife returns the wife's individual record.
@@ -33,11 +34,12 @@ func (fq *FamilyQuery) Wife() (*gedcom.IndividualRecord, error) {
 		return nil, fmt.Errorf("family %s not found", fq.xrefID)
 	}
 
-	if famNode.Wife == nil {
+	wife := famNode.getWifeFromEdges()
+	if wife == nil {
 		return nil, nil // No wife
 	}
 
-	return famNode.Wife.Individual, nil
+	return wife.Individual, nil
 }
 
 // Children returns all children's individual records.
@@ -47,8 +49,10 @@ func (fq *FamilyQuery) Children() ([]*gedcom.IndividualRecord, error) {
 		return nil, fmt.Errorf("family %s not found", fq.xrefID)
 	}
 
-	children := make([]*gedcom.IndividualRecord, 0, len(famNode.Children))
-	for _, childNode := range famNode.Children {
+	// Compute children from edges (no longer cached in node)
+	childNodes := famNode.getChildrenFromEdges()
+	children := make([]*gedcom.IndividualRecord, 0, len(childNodes))
+	for _, childNode := range childNodes {
 		if childNode.Individual != nil {
 			children = append(children, childNode.Individual)
 		}
@@ -65,11 +69,13 @@ func (fq *FamilyQuery) Parents() ([]*gedcom.IndividualRecord, error) {
 	}
 
 	parents := make([]*gedcom.IndividualRecord, 0, 2)
-	if famNode.Husband != nil && famNode.Husband.Individual != nil {
-		parents = append(parents, famNode.Husband.Individual)
+	husband := famNode.getHusbandFromEdges()
+	if husband != nil && husband.Individual != nil {
+		parents = append(parents, husband.Individual)
 	}
-	if famNode.Wife != nil && famNode.Wife.Individual != nil {
-		parents = append(parents, famNode.Wife.Individual)
+	wife := famNode.getWifeFromEdges()
+	if wife != nil && wife.Individual != nil {
+		parents = append(parents, wife.Individual)
 	}
 
 	return parents, nil

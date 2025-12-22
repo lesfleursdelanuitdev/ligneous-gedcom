@@ -120,10 +120,13 @@ func (fi *FilterIndexes) buildIndexes(graph *Graph) {
 		}
 
 		// Has children index
-		fi.hasChildrenIndex[xrefID] = len(node.Children) > 0
+		// Compute from edges instead of cached fields
+		children := node.getChildrenFromEdges()
+		fi.hasChildrenIndex[xrefID] = len(children) > 0
 
 		// Has spouse index
-		fi.hasSpouseIndex[xrefID] = len(node.Spouses) > 0
+		spouses := node.getSpousesFromEdges()
+		fi.hasSpouseIndex[xrefID] = len(spouses) > 0
 
 		// Living index
 		fi.livingIndex[xrefID] = indi.GetDeathDate() == ""
@@ -148,6 +151,40 @@ func (fi *FilterIndexes) findByName(pattern string) []string {
 	// Check exact matches and word matches
 	for key, xrefIDs := range fi.nameIndex {
 		if strings.Contains(key, patternLower) {
+			for _, xrefID := range xrefIDs {
+				resultSet[xrefID] = true
+			}
+		}
+	}
+
+	result := make([]string, 0, len(resultSet))
+	for xrefID := range resultSet {
+		result = append(result, xrefID)
+	}
+
+	return result
+}
+
+// findByNameExact finds individuals by exact name match (case-insensitive).
+func (fi *FilterIndexes) findByNameExact(name string) []string {
+	fi.mu.RLock()
+	defer fi.mu.RUnlock()
+
+	nameLower := strings.ToLower(name)
+	return fi.nameIndex[nameLower]
+}
+
+// findByNameStarts finds individuals by name starting with prefix (case-insensitive).
+func (fi *FilterIndexes) findByNameStarts(prefix string) []string {
+	fi.mu.RLock()
+	defer fi.mu.RUnlock()
+
+	prefixLower := strings.ToLower(prefix)
+	resultSet := make(map[string]bool)
+
+	// Check all name index keys that start with the prefix
+	for key, xrefIDs := range fi.nameIndex {
+		if strings.HasPrefix(key, prefixLower) {
 			for _, xrefID := range xrefIDs {
 				resultSet[xrefID] = true
 			}

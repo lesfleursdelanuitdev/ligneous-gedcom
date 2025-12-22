@@ -174,20 +174,23 @@ func TestGraph_AddEdgeIncremental_UpdatesRelationships(t *testing.T) {
 		t.Fatalf("Failed to build graph: %v", err)
 	}
 
-	// Verify relationships were cached
+	// Verify relationships (computed on-demand from edges)
 	indi1Node := graph.GetIndividual("@I1@")
 	indi3Node := graph.GetIndividual("@I3@")
 
-	if len(indi1Node.Spouses) == 0 {
-		t.Error("Expected @I1@ to have spouse relationship cached")
+	spouses := indi1Node.getSpousesFromEdges()
+	if len(spouses) == 0 {
+		t.Error("Expected @I1@ to have spouse relationship")
 	}
 
-	if len(indi1Node.Children) == 0 {
-		t.Error("Expected @I1@ to have children relationship cached")
+	children := indi1Node.getChildrenFromEdges()
+	if len(children) == 0 {
+		t.Error("Expected @I1@ to have children relationship")
 	}
 
-	if len(indi3Node.Parents) == 0 {
-		t.Error("Expected @I3@ to have parents relationship cached")
+	parents := indi3Node.getParentsFromEdges()
+	if len(parents) == 0 {
+		t.Error("Expected @I3@ to have parents relationship")
 	}
 
 	// Add a new child incrementally
@@ -204,17 +207,20 @@ func TestGraph_AddEdgeIncremental_UpdatesRelationships(t *testing.T) {
 		t.Fatalf("Failed to add edge: %v", err)
 	}
 
-	// Verify relationships were updated
-	if len(famNode.Children) != 2 {
-		t.Errorf("Expected family to have 2 children, got %d", len(famNode.Children))
+	// Verify relationships were updated (computed on-demand)
+	famChildren := famNode.getChildrenFromEdges()
+	if len(famChildren) != 2 {
+		t.Errorf("Expected family to have 2 children, got %d", len(famChildren))
 	}
 
-	if len(indi1Node.Children) != 2 {
-		t.Errorf("Expected @I1@ to have 2 children, got %d", len(indi1Node.Children))
+	indi1Children := indi1Node.getChildrenFromEdges()
+	if len(indi1Children) != 2 {
+		t.Errorf("Expected @I1@ to have 2 children, got %d", len(indi1Children))
 	}
 
-	if len(indi4Node.Parents) != 2 {
-		t.Errorf("Expected @I4@ to have 2 parents, got %d", len(indi4Node.Parents))
+	indi4Parents := indi4Node.getParentsFromEdges()
+	if len(indi4Parents) != 2 {
+		t.Errorf("Expected @I4@ to have 2 parents, got %d", len(indi4Parents))
 	}
 }
 
@@ -244,9 +250,10 @@ func TestGraph_RemoveEdgeIncremental_UpdatesRelationships(t *testing.T) {
 	indi1Node := graph.GetIndividual("@I1@")
 	indi2Node := graph.GetIndividual("@I2@")
 
-	// Verify initial relationships
-	if len(indi1Node.Children) != 1 {
-		t.Errorf("Expected @I1@ to have 1 child initially, got %d", len(indi1Node.Children))
+	// Verify initial relationships (computed on-demand)
+	children := indi1Node.getChildrenFromEdges()
+	if len(children) != 1 {
+		t.Errorf("Expected @I1@ to have 1 child initially, got %d", len(children))
 	}
 
 	// Find and remove the CHIL edge
@@ -269,13 +276,15 @@ func TestGraph_RemoveEdgeIncremental_UpdatesRelationships(t *testing.T) {
 		t.Fatalf("Failed to remove edge: %v", err)
 	}
 
-	// Verify relationships were updated
-	if len(indi1Node.Children) != 0 {
-		t.Errorf("Expected @I1@ to have 0 children after removal, got %d", len(indi1Node.Children))
+	// Verify relationships were updated (computed on-demand)
+	childrenAfter := indi1Node.getChildrenFromEdges()
+	if len(childrenAfter) != 0 {
+		t.Errorf("Expected @I1@ to have 0 children after removal, got %d", len(childrenAfter))
 	}
 
-	if len(indi2Node.Parents) != 0 {
-		t.Errorf("Expected @I2@ to have 0 parents after removal, got %d", len(indi2Node.Parents))
+	parentsAfter := indi2Node.getParentsFromEdges()
+	if len(parentsAfter) != 0 {
+		t.Errorf("Expected @I2@ to have 0 parents after removal, got %d", len(parentsAfter))
 	}
 }
 
@@ -367,9 +376,9 @@ func TestGraph_IncrementalUpdates_CacheInvalidation(t *testing.T) {
 		t.Fatalf("Failed to build graph: %v", err)
 	}
 
-	// Cache a query result (access Parents field directly)
+	// Get a query result (computed on-demand from edges)
 	indi1Node := graph.GetIndividual("@I1@")
-	parents1 := indi1Node.Parents
+	parents1 := indi1Node.getParentsFromEdges()
 	_ = parents1
 
 	// Add a new node
@@ -382,7 +391,7 @@ func TestGraph_IncrementalUpdates_CacheInvalidation(t *testing.T) {
 		t.Fatalf("Failed to add node: %v", err)
 	}
 
-	// Cache should be cleared (we can't directly test, but verify it doesn't crash)
-	parents2 := indi1Node.Parents
+	// Verify it doesn't crash (relationships computed on-demand, so always fresh)
+	parents2 := indi1Node.getParentsFromEdges()
 	_ = parents2
 }

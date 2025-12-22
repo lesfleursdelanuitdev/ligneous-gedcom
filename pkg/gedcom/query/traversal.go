@@ -10,7 +10,8 @@ func (g *Graph) BFS(startID string, visitor func(GraphNode) bool) error {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 
-	startNode := g.nodes[startID]
+	startInternalID := g.GetNodeID(startID)
+	startNode := g.nodes[startInternalID]
 	if startNode == nil {
 		return fmt.Errorf("node %s not found", startID)
 	}
@@ -57,7 +58,8 @@ func (g *Graph) DFS(startID string, visitor func(GraphNode) bool) error {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 
-	startNode := g.nodes[startID]
+	startInternalID := g.GetNodeID(startID)
+	startNode := g.nodes[startInternalID]
 	if startNode == nil {
 		return fmt.Errorf("node %s not found", startID)
 	}

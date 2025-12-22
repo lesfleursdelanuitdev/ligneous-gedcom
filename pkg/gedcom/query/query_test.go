@@ -631,3 +631,290 @@ func TestFilterQuery_Count(t *testing.T) {
 		t.Errorf("Expected count 0, got %d", count)
 	}
 }
+
+func TestFilterQuery_ByNameExact(t *testing.T) {
+	tree := gedcom.NewGedcomTree()
+
+	indi1Line := gedcom.NewGedcomLine(0, "INDI", "", "@I1@")
+	indi1Line.AddChild(gedcom.NewGedcomLine(1, "NAME", "John /Doe/", ""))
+	indi1 := gedcom.NewIndividualRecord(indi1Line)
+	tree.AddRecord(indi1)
+
+	indi2Line := gedcom.NewGedcomLine(0, "INDI", "", "@I2@")
+	indi2Line.AddChild(gedcom.NewGedcomLine(1, "NAME", "John /Smith/", ""))
+	indi2 := gedcom.NewIndividualRecord(indi2Line)
+	tree.AddRecord(indi2)
+
+	query, err := NewQuery(tree)
+	if err != nil {
+		t.Fatalf("Failed to create query: %v", err)
+	}
+
+	results, err := query.Filter().ByNameExact("John /Doe/").Execute()
+	if err != nil {
+		t.Fatalf("Failed to execute filter: %v", err)
+	}
+
+	if len(results) != 1 {
+		t.Errorf("Expected 1 result, got %d", len(results))
+	}
+
+	if len(results) > 0 && results[0].XrefID() != "@I1@" {
+		t.Errorf("Expected @I1@, got %s", results[0].XrefID())
+	}
+}
+
+func TestFilterQuery_ByNameStarts(t *testing.T) {
+	tree := gedcom.NewGedcomTree()
+
+	indi1Line := gedcom.NewGedcomLine(0, "INDI", "", "@I1@")
+	indi1Line.AddChild(gedcom.NewGedcomLine(1, "NAME", "John /Doe/", ""))
+	indi1 := gedcom.NewIndividualRecord(indi1Line)
+	tree.AddRecord(indi1)
+
+	indi2Line := gedcom.NewGedcomLine(0, "INDI", "", "@I2@")
+	indi2Line.AddChild(gedcom.NewGedcomLine(1, "NAME", "Jane /Smith/", ""))
+	indi2 := gedcom.NewIndividualRecord(indi2Line)
+	tree.AddRecord(indi2)
+
+	query, err := NewQuery(tree)
+	if err != nil {
+		t.Fatalf("Failed to create query: %v", err)
+	}
+
+	results, err := query.Filter().ByNameStarts("John").Execute()
+	if err != nil {
+		t.Fatalf("Failed to execute filter: %v", err)
+	}
+
+	if len(results) != 1 {
+		t.Errorf("Expected 1 result, got %d", len(results))
+	}
+
+	if len(results) > 0 && results[0].XrefID() != "@I1@" {
+		t.Errorf("Expected @I1@, got %s", results[0].XrefID())
+	}
+}
+
+func TestFilterQuery_ByNameEnds(t *testing.T) {
+	tree := gedcom.NewGedcomTree()
+
+	indi1Line := gedcom.NewGedcomLine(0, "INDI", "", "@I1@")
+	indi1Line.AddChild(gedcom.NewGedcomLine(1, "NAME", "John /Doe/", ""))
+	indi1 := gedcom.NewIndividualRecord(indi1Line)
+	tree.AddRecord(indi1)
+
+	indi2Line := gedcom.NewGedcomLine(0, "INDI", "", "@I2@")
+	indi2Line.AddChild(gedcom.NewGedcomLine(1, "NAME", "Jane /Smith/", ""))
+	indi2 := gedcom.NewIndividualRecord(indi2Line)
+	tree.AddRecord(indi2)
+
+	query, err := NewQuery(tree)
+	if err != nil {
+		t.Fatalf("Failed to create query: %v", err)
+	}
+
+	results, err := query.Filter().ByNameEnds("/Doe/").Execute()
+	if err != nil {
+		t.Fatalf("Failed to execute filter: %v", err)
+	}
+
+	if len(results) != 1 {
+		t.Errorf("Expected 1 result, got %d", len(results))
+	}
+
+	if len(results) > 0 && results[0].XrefID() != "@I1@" {
+		t.Errorf("Expected @I1@, got %s", results[0].XrefID())
+	}
+}
+
+func TestFilterQuery_NoChildren(t *testing.T) {
+	tree := gedcom.NewGedcomTree()
+
+	// Create parent
+	indi1Line := gedcom.NewGedcomLine(0, "INDI", "", "@I1@")
+	indi1 := gedcom.NewIndividualRecord(indi1Line)
+	tree.AddRecord(indi1)
+
+	// Create child
+	indi2Line := gedcom.NewGedcomLine(0, "INDI", "", "@I2@")
+	indi2Line.AddChild(gedcom.NewGedcomLine(1, "FAMC", "@F1@", ""))
+	indi2 := gedcom.NewIndividualRecord(indi2Line)
+	tree.AddRecord(indi2)
+
+	// Create individual without children
+	indi3Line := gedcom.NewGedcomLine(0, "INDI", "", "@I3@")
+	indi3 := gedcom.NewIndividualRecord(indi3Line)
+	tree.AddRecord(indi3)
+
+	// Family
+	famLine := gedcom.NewGedcomLine(0, "FAM", "", "@F1@")
+	famLine.AddChild(gedcom.NewGedcomLine(1, "HUSB", "@I1@", ""))
+	famLine.AddChild(gedcom.NewGedcomLine(1, "CHIL", "@I2@", ""))
+	fam := gedcom.NewFamilyRecord(famLine)
+	tree.AddRecord(fam)
+
+	query, err := NewQuery(tree)
+	if err != nil {
+		t.Fatalf("Failed to create query: %v", err)
+	}
+
+	results, err := query.Filter().NoChildren().Execute()
+	if err != nil {
+		t.Fatalf("Failed to execute filter: %v", err)
+	}
+
+	if len(results) != 2 { // indi2 and indi3
+		t.Errorf("Expected 2 results, got %d", len(results))
+	}
+}
+
+func TestFilterQuery_NoSpouse(t *testing.T) {
+	tree := gedcom.NewGedcomTree()
+
+	// Create individuals
+	indi1Line := gedcom.NewGedcomLine(0, "INDI", "", "@I1@")
+	indi1 := gedcom.NewIndividualRecord(indi1Line)
+	tree.AddRecord(indi1)
+
+	indi2Line := gedcom.NewGedcomLine(0, "INDI", "", "@I2@")
+	indi2 := gedcom.NewIndividualRecord(indi2Line)
+	tree.AddRecord(indi2)
+
+	indi3Line := gedcom.NewGedcomLine(0, "INDI", "", "@I3@")
+	indi3 := gedcom.NewIndividualRecord(indi3Line)
+	tree.AddRecord(indi3)
+
+	// Family (I1 and I2 are spouses)
+	famLine := gedcom.NewGedcomLine(0, "FAM", "", "@F1@")
+	famLine.AddChild(gedcom.NewGedcomLine(1, "HUSB", "@I1@", ""))
+	famLine.AddChild(gedcom.NewGedcomLine(1, "WIFE", "@I2@", ""))
+	fam := gedcom.NewFamilyRecord(famLine)
+	tree.AddRecord(fam)
+
+	query, err := NewQuery(tree)
+	if err != nil {
+		t.Fatalf("Failed to create query: %v", err)
+	}
+
+	results, err := query.Filter().NoSpouse().Execute()
+	if err != nil {
+		t.Fatalf("Failed to execute filter: %v", err)
+	}
+
+	if len(results) != 1 { // Only I3
+		t.Errorf("Expected 1 result, got %d", len(results))
+	}
+
+	if len(results) > 0 && results[0].XrefID() != "@I3@" {
+		t.Errorf("Expected @I3@, got %s", results[0].XrefID())
+	}
+}
+
+func TestFilterQuery_ByBirthYear(t *testing.T) {
+	tree := gedcom.NewGedcomTree()
+
+	indi1Line := gedcom.NewGedcomLine(0, "INDI", "", "@I1@")
+	birt1 := gedcom.NewGedcomLine(1, "BIRT", "", "")
+	birt1.AddChild(gedcom.NewGedcomLine(2, "DATE", "1800", ""))
+	indi1Line.AddChild(birt1)
+	indi1 := gedcom.NewIndividualRecord(indi1Line)
+	tree.AddRecord(indi1)
+
+	indi2Line := gedcom.NewGedcomLine(0, "INDI", "", "@I2@")
+	birt2 := gedcom.NewGedcomLine(1, "BIRT", "", "")
+	birt2.AddChild(gedcom.NewGedcomLine(2, "DATE", "1850", ""))
+	indi2Line.AddChild(birt2)
+	indi2 := gedcom.NewIndividualRecord(indi2Line)
+	tree.AddRecord(indi2)
+
+	query, err := NewQuery(tree)
+	if err != nil {
+		t.Fatalf("Failed to create query: %v", err)
+	}
+
+	results, err := query.Filter().ByBirthYear(1800).Execute()
+	if err != nil {
+		t.Fatalf("Failed to execute filter: %v", err)
+	}
+
+	if len(results) != 1 {
+		t.Errorf("Expected 1 result, got %d", len(results))
+	}
+
+	if len(results) > 0 && results[0].XrefID() != "@I1@" {
+		t.Errorf("Expected @I1@, got %s", results[0].XrefID())
+	}
+}
+
+func TestFilterQuery_ByBirthDateBefore(t *testing.T) {
+	tree := gedcom.NewGedcomTree()
+
+	indi1Line := gedcom.NewGedcomLine(0, "INDI", "", "@I1@")
+	birt1 := gedcom.NewGedcomLine(1, "BIRT", "", "")
+	birt1.AddChild(gedcom.NewGedcomLine(2, "DATE", "1800", ""))
+	indi1Line.AddChild(birt1)
+	indi1 := gedcom.NewIndividualRecord(indi1Line)
+	tree.AddRecord(indi1)
+
+	indi2Line := gedcom.NewGedcomLine(0, "INDI", "", "@I2@")
+	birt2 := gedcom.NewGedcomLine(1, "BIRT", "", "")
+	birt2.AddChild(gedcom.NewGedcomLine(2, "DATE", "1850", ""))
+	indi2Line.AddChild(birt2)
+	indi2 := gedcom.NewIndividualRecord(indi2Line)
+	tree.AddRecord(indi2)
+
+	query, err := NewQuery(tree)
+	if err != nil {
+		t.Fatalf("Failed to create query: %v", err)
+	}
+
+	results, err := query.Filter().ByBirthDateBefore(1825).Execute()
+	if err != nil {
+		t.Fatalf("Failed to execute filter: %v", err)
+	}
+
+	if len(results) != 1 {
+		t.Errorf("Expected 1 result, got %d", len(results))
+	}
+
+	if len(results) > 0 && results[0].XrefID() != "@I1@" {
+		t.Errorf("Expected @I1@, got %s", results[0].XrefID())
+	}
+}
+
+func TestFilterQuery_ByBirthDateAfter(t *testing.T) {
+	tree := gedcom.NewGedcomTree()
+
+	indi1Line := gedcom.NewGedcomLine(0, "INDI", "", "@I1@")
+	birt1 := gedcom.NewGedcomLine(1, "BIRT", "", "")
+	birt1.AddChild(gedcom.NewGedcomLine(2, "DATE", "1800", ""))
+	indi1Line.AddChild(birt1)
+	indi1 := gedcom.NewIndividualRecord(indi1Line)
+	tree.AddRecord(indi1)
+
+	indi2Line := gedcom.NewGedcomLine(0, "INDI", "", "@I2@")
+	birt2 := gedcom.NewGedcomLine(1, "BIRT", "", "")
+	birt2.AddChild(gedcom.NewGedcomLine(2, "DATE", "1850", ""))
+	indi2Line.AddChild(birt2)
+	indi2 := gedcom.NewIndividualRecord(indi2Line)
+	tree.AddRecord(indi2)
+
+	query, err := NewQuery(tree)
+	if err != nil {
+		t.Fatalf("Failed to create query: %v", err)
+	}
+
+	results, err := query.Filter().ByBirthDateAfter(1825).Execute()
+	if err != nil {
+		t.Fatalf("Failed to execute filter: %v", err)
+	}
+
+	if len(results) != 1 {
+		t.Errorf("Expected 1 result, got %d", len(results))
+	}
+
+	if len(results) > 0 && results[0].XrefID() != "@I2@" {
+		t.Errorf("Expected @I2@, got %s", results[0].XrefID())
+	}
+}

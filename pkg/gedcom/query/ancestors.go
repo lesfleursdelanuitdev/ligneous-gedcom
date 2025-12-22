@@ -5,25 +5,28 @@ import (
 )
 
 // CommonAncestors finds all common ancestors of two individuals.
-func (g *Graph) CommonAncestors(indi1ID, indi2ID string) ([]*IndividualNode, error) {
+func (g *Graph) CommonAncestors(indi1Xref, indi2Xref string) ([]*IndividualNode, error) {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
+
+	indi1ID := g.xrefToID[indi1Xref]
+	indi2ID := g.xrefToID[indi2Xref]
 
 	indi1 := g.individuals[indi1ID]
 	indi2 := g.individuals[indi2ID]
 
 	if indi1 == nil {
-		return nil, fmt.Errorf("individual %s not found", indi1ID)
+		return nil, fmt.Errorf("individual %s not found", indi1Xref)
 	}
 	if indi2 == nil {
-		return nil, fmt.Errorf("individual %s not found", indi2ID)
+		return nil, fmt.Errorf("individual %s not found", indi2Xref)
 	}
 
-	// Find all ancestors of indi1
-	ancestors1 := g.findAllAncestors(indi1, make(map[string]bool))
+	// Find all ancestors of indi1 (using uint32 IDs)
+	ancestors1 := g.findAllAncestors(indi1, make(map[uint32]bool))
 
-	// Find all ancestors of indi2
-	ancestors2 := g.findAllAncestors(indi2, make(map[string]bool))
+	// Find all ancestors of indi2 (using uint32 IDs)
+	ancestors2 := g.findAllAncestors(indi2, make(map[uint32]bool))
 
 	// Find intersection
 	common := make([]*IndividualNode, 0)
@@ -38,23 +41,32 @@ func (g *Graph) CommonAncestors(indi1ID, indi2ID string) ([]*IndividualNode, err
 	return common, nil
 }
 
-// findAllAncestors finds all ancestors of an individual recursively.
-func (g *Graph) findAllAncestors(indi *IndividualNode, visited map[string]bool) map[string]bool {
-	if visited[indi.ID()] {
+// findAllAncestors finds all ancestors of an individual recursively (using uint32 IDs).
+func (g *Graph) findAllAncestors(indi *IndividualNode, visited map[uint32]bool) map[uint32]bool {
+	// Get uint32 ID for this individual
+	indiXref := indi.ID()
+	indiID := g.getID(indiXref)
+	if indiID == 0 {
 		return visited
 	}
 
-	visited[indi.ID()] = true
+	if visited[indiID] {
+		return visited
+	}
+
+	visited[indiID] = true
 
 	// Find parents via FAMC edges
 	for _, edge := range indi.OutEdges() {
 		if edge.EdgeType == EdgeTypeFAMC && edge.Family != nil {
 			famNode := edge.Family
-			if famNode.Husband != nil {
-				g.findAllAncestors(famNode.Husband, visited)
+			husband := famNode.getHusbandFromEdges()
+			if husband != nil {
+				g.findAllAncestors(husband, visited)
 			}
-			if famNode.Wife != nil {
-				g.findAllAncestors(famNode.Wife, visited)
+			wife := famNode.getWifeFromEdges()
+			if wife != nil {
+				g.findAllAncestors(wife, visited)
 			}
 		}
 	}

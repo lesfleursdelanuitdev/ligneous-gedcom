@@ -18,38 +18,40 @@ type RelationshipResult struct {
 }
 
 // CalculateRelationship calculates the relationship between two individuals.
-func (g *Graph) CalculateRelationship(fromID, toID string) (*RelationshipResult, error) {
+func (g *Graph) CalculateRelationship(fromXref, toXref string) (*RelationshipResult, error) {
+	fromID := g.GetNodeID(fromXref)
+	toID := g.GetNodeID(toXref)
 	fromNode := g.individuals[fromID]
 	toNode := g.individuals[toID]
 
 	if fromNode == nil {
-		return nil, fmt.Errorf("individual %s not found", fromID)
+		return nil, fmt.Errorf("individual %s not found", fromXref)
 	}
 	if toNode == nil {
-		return nil, fmt.Errorf("individual %s not found", toID)
+		return nil, fmt.Errorf("individual %s not found", toXref)
 	}
 
 	result := &RelationshipResult{}
 
-	// Find shortest path
-	path, err := g.ShortestPath(fromID, toID)
+	// Find shortest path (using XREF strings)
+	path, err := g.ShortestPath(fromXref, toXref)
 	if err != nil {
 		return nil, err
 	}
 	result.Path = path
 
 	// Find all paths (limited to reasonable number)
-	allPaths, _ := g.AllPaths(fromID, toID, 10)
+	allPaths, _ := g.AllPaths(fromXref, toXref, 10)
 	result.AllPaths = allPaths
 
 	// Check if direct relationship (parent, child, sibling, spouse)
 	result.IsDirect = g.isDirectRelationship(fromNode, toNode)
 
-	// Check if ancestral relationship
-	result.IsAncestral = g.isAncestralRelationship(fromID, toID)
+	// Check if ancestral relationship (using XREF strings)
+	result.IsAncestral = g.isAncestralRelationship(fromXref, toXref)
 
 	// Check if descendant relationship
-	result.IsDescendant = g.isAncestralRelationship(toID, fromID)
+	result.IsDescendant = g.isAncestralRelationship(toXref, fromXref)
 
 	// Check if collateral (cousins, uncles, etc.)
 	result.IsCollateral = !result.IsDirect && !result.IsAncestral && !result.IsDescendant
@@ -64,14 +66,14 @@ func (g *Graph) CalculateRelationship(fromID, toID string) (*RelationshipResult,
 		result.Degree = g.calculateGenerations(path)
 		result.Removal = 0
 	} else if result.IsCollateral {
-		// Find common ancestor
-		commonAncestors, _ := g.CommonAncestors(fromID, toID)
+		// Find common ancestor (using XREF strings)
+		commonAncestors, _ := g.CommonAncestors(fromXref, toXref)
 		if len(commonAncestors) > 0 {
-			lca, _ := g.LowestCommonAncestor(fromID, toID)
+			lca, _ := g.LowestCommonAncestor(fromXref, toXref)
 			if lca != nil {
 				// Calculate degree: generations from LCA to both individuals
-				fromDepth := g.getAncestorDepth(fromID, lca.ID())
-				toDepth := g.getAncestorDepth(toID, lca.ID())
+				fromDepth := g.getAncestorDepth(fromXref, lca.ID())
+				toDepth := g.getAncestorDepth(toXref, lca.ID())
 				result.Degree = min(fromDepth, toDepth) - 1
 				result.Removal = abs(fromDepth - toDepth)
 				result.RelationshipType = g.getCollateralRelationshipType(result.Degree, result.Removal)
@@ -84,29 +86,33 @@ func (g *Graph) CalculateRelationship(fromID, toID string) (*RelationshipResult,
 
 // isDirectRelationship checks if two individuals have a direct relationship.
 func (g *Graph) isDirectRelationship(from, to *IndividualNode) bool {
-	// Check if parent
-	for _, parent := range to.Parents {
+	// Check if parent (from is parent of to)
+	parents := to.getParentsFromEdges()
+	for _, parent := range parents {
 		if parent.ID() == from.ID() {
 			return true
 		}
 	}
 
-	// Check if child
-	for _, child := range from.Children {
+	// Check if child (to is child of from)
+	children := from.getChildrenFromEdges()
+	for _, child := range children {
 		if child.ID() == to.ID() {
 			return true
 		}
 	}
 
 	// Check if sibling
-	for _, sibling := range from.Siblings {
+	siblings := from.getSiblingsFromEdges()
+	for _, sibling := range siblings {
 		if sibling.ID() == to.ID() {
 			return true
 		}
 	}
 
 	// Check if spouse
-	for _, spouse := range from.Spouses {
+	spouses := from.getSpousesFromEdges()
+	for _, spouse := range spouses {
 		if spouse.ID() == to.ID() {
 			return true
 		}
@@ -115,45 +121,51 @@ func (g *Graph) isDirectRelationship(from, to *IndividualNode) bool {
 	return false
 }
 
-// isAncestralRelationship checks if toID is an ancestor of fromID.
-func (g *Graph) isAncestralRelationship(fromID, toID string) bool {
+// isAncestralRelationship checks if toXref is an ancestor of fromXref.
+func (g *Graph) isAncestralRelationship(fromXref, toXref string) bool {
+	fromID := g.GetNodeID(fromXref)
 	fromNode := g.individuals[fromID]
 	if fromNode == nil {
 		return false
 	}
 
-	// Find all ancestors of fromID
-	ancestors := g.findAllAncestors(fromNode, make(map[string]bool))
+	// Find all ancestors of fromNode (using uint32 IDs)
+	ancestors := g.findAllAncestors(fromNode, make(map[uint32]bool))
 
-	// Check if toID is in ancestors
+	// Check if toXref is in ancestors
+	toID := g.GetNodeID(toXref)
 	return ancestors[toID]
 }
 
 // getDirectRelationshipType returns the type of direct relationship.
 func (g *Graph) getDirectRelationshipType(from, to *IndividualNode) string {
-	// Check if parent
-	for _, parent := range to.Parents {
+	// Check if parent (from is parent of to)
+	parents := to.getParentsFromEdges()
+	for _, parent := range parents {
 		if parent.ID() == from.ID() {
 			return "parent"
 		}
 	}
 
-	// Check if child
-	for _, child := range from.Children {
+	// Check if child (to is child of from)
+	children := from.getChildrenFromEdges()
+	for _, child := range children {
 		if child.ID() == to.ID() {
 			return "child"
 		}
 	}
 
 	// Check if sibling
-	for _, sibling := range from.Siblings {
+	siblings := from.getSiblingsFromEdges()
+	for _, sibling := range siblings {
 		if sibling.ID() == to.ID() {
 			return "sibling"
 		}
 	}
 
 	// Check if spouse
-	for _, spouse := range from.Spouses {
+	spouses := from.getSpousesFromEdges()
+	for _, spouse := range spouses {
 		if spouse.ID() == to.ID() {
 			return "spouse"
 		}

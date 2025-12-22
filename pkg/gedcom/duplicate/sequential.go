@@ -5,32 +5,34 @@ import (
 )
 
 // findDuplicatesSequential finds duplicates using sequential processing.
-func (dd *DuplicateDetector) findDuplicatesSequential(individuals []*gedcom.IndividualRecord) ([]DuplicateMatch, int, error) {
+func (dd *DuplicateDetector) findDuplicatesSequential(individuals []*gedcom.IndividualRecord) ([]DuplicateMatch, int, *BlockingMetrics, error) {
 	if len(individuals) < 2 {
-		return []DuplicateMatch{}, 0, nil
+		return []DuplicateMatch{}, 0, nil, nil
 	}
 
-	// Build indexes for pre-filtering
-	indexes := dd.buildIndexes(individuals)
+	// Use blocking-based candidate generation (much faster than O(n²))
+	blockIndex := dd.buildBlockIndex(individuals)
+	maxCandidatesPerPerson := dd.config.MaxCandidatesPerPerson
+	if maxCandidatesPerPerson <= 0 {
+		maxCandidatesPerPerson = 200 // Default
+	}
 
-	// Find duplicates
+	// Find duplicates using blocking
 	matches := make([]DuplicateMatch, 0)
 	comparisonCount := 0
+	candidatesPerPerson := make([]int, len(individuals))
 
-	for i := 0; i < len(individuals); i++ {
-		for j := i + 1; j < len(individuals); j++ {
-			indi1 := individuals[i]
-			indi2 := individuals[j]
-
-			// Pre-filter: skip if not in same index buckets
-			if !dd.shouldCompare(indi1, indi2, indexes) {
-				continue
-			}
-
+	for i := uint32(0); i < uint32(len(individuals)); i++ {
+		candidates := blockIndex.findCandidates(i, maxCandidatesPerPerson)
+		candidatesPerPerson[i] = len(candidates)
+		for candidateID := range candidates {
 			comparisonCount++
 			if dd.config.MaxComparisons > 0 && comparisonCount > dd.config.MaxComparisons {
 				break
 			}
+
+			indi1 := individuals[i]
+			indi2 := individuals[candidateID]
 
 			// Calculate similarity
 			match, err := dd.compare(indi1, indi2)
@@ -43,9 +45,15 @@ func (dd *DuplicateDetector) findDuplicatesSequential(individuals []*gedcom.Indi
 				matches = append(matches, *match)
 			}
 		}
+		if dd.config.MaxComparisons > 0 && comparisonCount >= dd.config.MaxComparisons {
+			break
+		}
 	}
 
-	return matches, comparisonCount, nil
+	// Compute blocking metrics
+	blockingMetrics := blockIndex.computeBlockingMetrics(len(individuals), candidatesPerPerson)
+
+	return matches, comparisonCount, blockingMetrics, nil
 }
 
 // findDuplicatesBetweenSequential finds duplicates between two trees using sequential processing.
