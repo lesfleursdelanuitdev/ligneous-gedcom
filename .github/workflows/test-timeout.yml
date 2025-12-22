@@ -19,8 +19,8 @@ jobs:
     
     - name: Run tests with timeout
       run: |
-        # Run all tests with 2-minute timeout
-        go test -timeout 2m -v ./...
+        # Run tests with 2-minute timeout, skipping long-running performance tests
+        go test -timeout 2m -short -v ./...
         
         # Check for any tests that might have timed out
         if [ $? -ne 0 ]; then
