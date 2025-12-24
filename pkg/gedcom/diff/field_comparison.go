@@ -3,7 +3,7 @@ package diff
 import (
 	"strings"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // compareIndividual compares two individual records field by field.

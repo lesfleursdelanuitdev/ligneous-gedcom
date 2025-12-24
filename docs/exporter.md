@@ -53,7 +53,7 @@ The exporter package provides functionality for converting GEDCOM trees to vario
 The exporter package is part of the GEDCOM Go library:
 
 ```go
-import "github.com/lesfleursdelanuitdev/gedcom-go/internal/exporter"
+import "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/exporter"
 ```
 
 ---
@@ -67,9 +67,9 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/exporter"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/exporter"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 func main() {
@@ -653,9 +653,9 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/exporter"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/exporter"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 func main() {

@@ -3,7 +3,7 @@ package duplicate
 import (
 	"testing"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 func TestFindDuplicates_SingleFile(t *testing.T) {

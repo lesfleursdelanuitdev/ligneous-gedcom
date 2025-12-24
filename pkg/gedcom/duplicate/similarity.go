@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // calculateNameSimilarity calculates the similarity between two individuals' names.

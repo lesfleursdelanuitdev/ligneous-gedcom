@@ -49,7 +49,7 @@ The parser package provides functionality for parsing GEDCOM (Genealogical Data 
 The parser package is part of the GEDCOM Go library:
 
 ```go
-import "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
+import "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
 ```
 
 ---
@@ -75,7 +75,7 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
 )
 
 func main() {
@@ -179,8 +179,8 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 func main() {
@@ -225,7 +225,7 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
 )
 
 func main() {
@@ -633,8 +633,8 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 func main() {
@@ -685,8 +685,8 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 func main() {

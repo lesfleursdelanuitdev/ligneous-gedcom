@@ -3,7 +3,7 @@ package query
 import (
 	"time"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // ByBirthMonth filters individuals born in a specific month (1-12).

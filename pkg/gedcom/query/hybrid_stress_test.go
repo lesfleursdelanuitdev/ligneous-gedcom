@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // testWithTimeout wraps a test function with a 2-minute timeout

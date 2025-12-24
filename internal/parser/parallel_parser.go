@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // ParallelHierarchicalParser is an experimental parser that attempts to parallelize
@@ -18,6 +18,7 @@ type ParallelHierarchicalParser struct {
 	parentsStack        *LineStack
 	continuationHandler *ContinuationHandler
 	errorManager        *gedcom.ErrorManager
+	factory             *gedcom.RecordFactory // Reused factory to avoid allocations
 	
 	// Channel for parallel record processing
 	recordChan chan *gedcom.GedcomLine
@@ -32,6 +33,7 @@ func NewParallelHierarchicalParser() *ParallelHierarchicalParser {
 		parentsStack:        NewLineStack(),
 		continuationHandler: NewContinuationHandler(),
 		errorManager:        gedcom.NewErrorManager(),
+		factory:             gedcom.NewRecordFactory(), // Create once, reuse for all records
 		recordChan:          make(chan *gedcom.GedcomLine, 100), // Buffered channel
 	}
 	
@@ -47,10 +49,9 @@ func NewParallelHierarchicalParser() *ParallelHierarchicalParser {
 func (php *ParallelHierarchicalParser) processRecords() {
 	defer php.wg.Done()
 	
-	factory := gedcom.NewRecordFactory()
-	
+	// Use the reused factory from the parser instance
 	for line := range php.recordChan {
-		record := factory.CreateRecord(line)
+		record := php.factory.CreateRecord(line)
 		php.tree.AddRecord(record)
 	}
 }
@@ -101,8 +102,8 @@ func (php *ParallelHierarchicalParser) Parse(filePath string) (*gedcom.GedcomTre
 			continue
 		}
 
-		// Parse the line
-		level, tag, value, xrefID, err := ParseLine(line)
+		// Parse the line using optimized parser (line is already trimmed)
+		level, tag, value, xrefID, err := ParseLineFast(line)
 		if err != nil {
 			php.errorManager.AddError(gedcom.SeverityWarning, fmt.Sprintf("Malformed line: %v", err), lineNumber, "Line Parsing")
 			continue
@@ -142,8 +143,7 @@ func (php *ParallelHierarchicalParser) Parse(filePath string) (*gedcom.GedcomTre
 				// Record sent for parallel processing
 			default:
 				// Channel full, process synchronously (fallback)
-				factory := gedcom.NewRecordFactory()
-				record := factory.CreateRecord(gedcomLine)
+				record := php.factory.CreateRecord(gedcomLine)
 				php.tree.AddRecord(record)
 			}
 

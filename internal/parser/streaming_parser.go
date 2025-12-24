@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // RecordHandler is a callback function that processes records as they're parsed.
@@ -100,8 +100,8 @@ func (shp *StreamingHierarchicalParser) parseStream(reader io.Reader, handler Re
 			continue
 		}
 
-		// Parse the line
-		level, tag, value, xrefID, err := ParseLine(line)
+		// Parse the line using optimized parser (line is already trimmed)
+		level, tag, value, xrefID, err := ParseLineFast(line)
 		if err != nil {
 			shp.errorManager.AddError(gedcom.SeverityWarning, fmt.Sprintf("Malformed line: %v", err), lineNumber, "Line Parsing")
 			continue

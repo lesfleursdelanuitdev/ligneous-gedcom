@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/cmd/gedcom/internal"
-	"github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/diff"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/cmd/gedcom/internal"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/diff"
 	"github.com/spf13/cobra"
 )
 

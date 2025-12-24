@@ -3,7 +3,7 @@ package diff
 import (
 	"time"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // DiffConfig holds configuration for GEDCOM comparison.

@@ -3,7 +3,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // LineStack is a stack of GedcomLine pointers used for hierarchical parsing.

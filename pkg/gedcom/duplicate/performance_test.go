@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/query"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/query"
 )
 
 // generateLargeTreeForDuplicate creates a tree with n individuals for duplicate testing

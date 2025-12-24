@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 func TestCSVExporter_ExportToFile(t *testing.T) {

@@ -2,7 +2,7 @@
 
 [![Go Version](https://img.shields.io/badge/go-1.23+-00ADD8?style=flat-square&logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/lesfleursdelanuitdev/gedcom-go)](https://goreportcard.com/report/github.com/lesfleursdelanuitdev/gedcom-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/lesfleursdelanuitdev/ligneous-gedcom)](https://goreportcard.com/report/github.com/lesfleursdelanuitdev/ligneous-gedcom)
 
 **ligneous-gedcom** (also known as **GEDCOM Go**) is a research-grade genealogy toolkit for people who want to understand, validate, and explore family history at scale — from a single family tree to entire communities.
 
@@ -18,7 +18,7 @@ It helps you find relationships, detect duplicates, understand data quality, and
 # 1. Install the tool
 # Option A: Prebuilt binaries (coming soon - check GitHub Releases)
 # Option B: Using Go (if you have Go installed)
-go install github.com/lesfleursdelanuitdev/gedcom-go/cmd/gedcom@latest
+go install github.com/lesfleursdelanuitdev/ligneous-gedcom/cmd/gedcom@latest
 
 # 2. Start interactive exploration (recommended for first-time users)
 gedcom interactive family.ged
@@ -106,7 +106,7 @@ For now, install via Go (see below). Once binaries are available, you'll be able
 ### Using Go Install
 
 ```bash
-go install github.com/lesfleursdelanuitdev/gedcom-go/cmd/gedcom@latest
+go install github.com/lesfleursdelanuitdev/ligneous-gedcom/cmd/gedcom@latest
 ```
 
 **Note:** If you don't use Go, wait for prebuilt binaries or use the source installation method below.
@@ -114,8 +114,8 @@ go install github.com/lesfleursdelanuitdev/gedcom-go/cmd/gedcom@latest
 ### From Source
 
 ```bash
-git clone https://github.com/lesfleursdelanuitdev/gedcom-go.git
-cd gedcom-go
+git clone https://github.com/lesfleursdelanuitdev/ligneous-gedcom.git
+cd ligneous-gedcom
 go build -o gedcom ./cmd/gedcom
 ```
 
@@ -242,9 +242,9 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/query"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/duplicate"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/query"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/duplicate"
 )
 
 func main() {

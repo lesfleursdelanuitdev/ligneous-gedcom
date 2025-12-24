@@ -1,8 +1,8 @@
 package diff
 
 import (
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/duplicate"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/duplicate"
 )
 
 // compareByContent performs content-based comparison using duplicate detection.

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // BlockKey represents a composite blocking key for candidate generation.

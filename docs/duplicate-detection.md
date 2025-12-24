@@ -27,7 +27,7 @@ The Duplicate Detection system identifies potential duplicate individuals across
 The duplicate detection package is part of the main gedcom-go module:
 
 ```go
-import "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/duplicate"
+import "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/duplicate"
 ```
 
 ---
@@ -41,8 +41,8 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/duplicate"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/duplicate"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
 )
 
 func main() {

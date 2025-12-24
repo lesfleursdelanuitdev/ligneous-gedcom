@@ -3,7 +3,7 @@ package query
 import (
 	"fmt"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // BuildGraph constructs a graph from a GEDCOM tree.

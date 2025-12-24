@@ -1,7 +1,7 @@
 package query
 
 import (
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // MultiIndividualQuery represents a query starting from multiple individuals.

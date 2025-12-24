@@ -3,7 +3,7 @@ package query
 import (
 	"time"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // AncestorOptions holds configuration for ancestor queries.

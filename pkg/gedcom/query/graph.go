@@ -3,7 +3,7 @@ package query
 import (
 	"sync"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // Graph represents the graph structure of a GEDCOM tree.

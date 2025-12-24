@@ -26,8 +26,8 @@ import (
     "fmt"
     "log"
     
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/query"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/query"
 )
 
 func main() {
@@ -285,7 +285,7 @@ marriageDate, err := q.Family("@F1@").MarriageDate()
 ### Standard Error Handling
 
 ```go
-import "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+import "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 
 // Create standardized error
 err := gedcom.NewStandardError(

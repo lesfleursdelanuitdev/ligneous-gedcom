@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // HierarchicalParser is a full hierarchical parser that builds complete GEDCOM tree structure.
@@ -17,6 +17,7 @@ type HierarchicalParser struct {
 	parentsStack        *LineStack
 	continuationHandler *ContinuationHandler
 	errorManager        *gedcom.ErrorManager
+	factory             *gedcom.RecordFactory // Reused factory to avoid allocations
 }
 
 // NewHierarchicalParser creates a new HierarchicalParser.
@@ -26,6 +27,7 @@ func NewHierarchicalParser() *HierarchicalParser {
 		parentsStack:        NewLineStack(),
 		continuationHandler: NewContinuationHandler(),
 		errorManager:        gedcom.NewErrorManager(),
+		factory:             gedcom.NewRecordFactory(), // Create once, reuse for all records
 	}
 }
 
@@ -75,8 +77,8 @@ func (hp *HierarchicalParser) Parse(filePath string) (*gedcom.GedcomTree, error)
 			continue
 		}
 
-		// Parse the line
-		level, tag, value, xrefID, err := ParseLine(line)
+		// Parse the line using optimized parser (line is already trimmed)
+		level, tag, value, xrefID, err := ParseLineFast(line)
 		if err != nil {
 			// Log warning but continue parsing
 			hp.errorManager.AddError(gedcom.SeverityWarning, fmt.Sprintf("Malformed line: %v", err), lineNumber, "Line Parsing")
@@ -114,9 +116,8 @@ func (hp *HierarchicalParser) Parse(filePath string) (*gedcom.GedcomTree, error)
 			gedcomLine := gedcom.NewGedcomLine(level, tag, value, xrefID)
 			gedcomLine.LineNumber = lineNumber
 
-			// Create Record from line using factory
-			factory := gedcom.NewRecordFactory()
-			record := factory.CreateRecord(gedcomLine)
+			// Create Record from line using reused factory
+			record := hp.factory.CreateRecord(gedcomLine)
 
 			// Add to tree
 			hp.tree.AddRecord(record)

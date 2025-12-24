@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 func TestGedcomExporter_ExportToString(t *testing.T) {

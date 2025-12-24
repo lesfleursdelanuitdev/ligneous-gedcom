@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // EventInfo represents information about an event.

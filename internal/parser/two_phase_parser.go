@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // RawRecord represents a record with unparsed child lines.
@@ -97,8 +97,8 @@ func (tpp *TwoPhaseParser) collectRecords(scanner *bufio.Scanner) error {
 			continue
 		}
 
-		// Parse the line
-		level, tag, value, xrefID, err := ParseLine(rawLine)
+		// Parse the line using optimized parser (line is already trimmed)
+		level, tag, value, xrefID, err := ParseLineFast(rawLine)
 		if err != nil {
 			tpp.errorManager.AddError(gedcom.SeverityWarning, fmt.Sprintf("Malformed line: %v", err), lineNumber, "Line Parsing")
 			continue
@@ -210,7 +210,7 @@ func (tpp *TwoPhaseParser) parseRecord(rawRecord *RawRecord) {
 	stack.Push(mainLine)
 
 	for _, rawLine := range rawRecord.RawLines {
-		level, tag, value, _, err := ParseLine(rawLine)
+		level, tag, value, _, err := ParseLineFast(rawLine)
 		if err != nil {
 			// Skip malformed lines (already logged in phase 1)
 			continue

@@ -1,0 +1,546 @@
+=== RUN   TestComprehensiveComparison
+
+====================================================================================================
+Comprehensive Parser Performance Comparison
+ParallelHierarchicalParser vs cacack/gedcom-go vs elliotchance/gedcom - 2000 iterations per file
+====================================================================================================
+=== RUN   TestComprehensiveComparison/user-royal92
+
+----------------------------------------------------------------------------------------------------
+Testing: user-royal92
+File: ../../testdata/royal92.ged
+File size: 487.96 KB (499666 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 27.940331934s
+  Average: 13.970165ms
+  Min: 7.119088ms
+  Max: 20.708208ms
+  P50 (median): 14.041295ms
+  P95: 16.939887ms
+  P99: 18.165013ms
+  Throughput: 34928.37 KB/s (34.11 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 35.060730332s
+  Average: 17.530365ms
+  Min: 9.614938ms
+  Max: 29.885602ms
+  P50 (median): 18.01227ms
+  P95: 22.146936ms
+  P99: 23.64134ms
+  Throughput: 27834.85 KB/s (27.18 MB/s)
+
+[elliotchance/gedcom Parser]
+  Running 2000 iterations...
+  Total time: 1m20.762825005s
+  Average: 40.381412ms
+  Min: 27.893272ms
+  Max: 57.154887ms
+  P50 (median): 39.962237ms
+  P95: 48.739517ms
+  P99: 52.490151ms
+  Throughput: 12083.66 KB/s (11.80 MB/s)
+
+[Comparison]
+  ✅ ParallelHierarchicalParser is 1.25x FASTER than cacack (20.3% faster)
+  ✅ ParallelHierarchicalParser is 2.89x FASTER than elliotchance (65.4% faster)
+  📊 cacack is 2.30x FASTER than elliotchance (56.6% faster)
+=== RUN   TestComprehensiveComparison/user-pres2020
+
+----------------------------------------------------------------------------------------------------
+Testing: user-pres2020
+File: ../../testdata/pres2020.ged
+File size: 1080.24 KB (1106168 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 44.390956684s
+  Average: 22.195478ms
+  Min: 13.566965ms
+  Max: 32.761305ms
+  P50 (median): 22.149168ms
+  P95: 27.078205ms
+  P99: 29.29806ms
+  Throughput: 48669.47 KB/s (47.53 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 52.879475053s
+  Average: 26.439737ms
+  Min: 14.61339ms
+  Max: 37.53041ms
+  P50 (median): 26.505076ms
+  P95: 32.828057ms
+  P99: 35.060558ms
+  Throughput: 40856.77 KB/s (39.90 MB/s)
+
+[elliotchance/gedcom Parser]
+  Running 2000 iterations...
+  Total time: 2m10.456804406s
+  Average: 65.228402ms
+  Min: 47.290725ms
+  Max: 99.117425ms
+  P50 (median): 64.606499ms
+  P95: 78.728594ms
+  P99: 84.835729ms
+  Throughput: 16560.92 KB/s (16.17 MB/s)
+
+[Comparison]
+  ✅ ParallelHierarchicalParser is 1.19x FASTER than cacack (16.1% faster)
+  ✅ ParallelHierarchicalParser is 2.94x FASTER than elliotchance (66.0% faster)
+  📊 cacack is 2.47x FASTER than elliotchance (59.5% faster)
+=== RUN   TestComprehensiveComparison/user-gracis
+
+----------------------------------------------------------------------------------------------------
+Testing: user-gracis
+File: ../../testdata/gracis.ged
+File size: 162.98 KB (166887 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 11.347625756s
+  Average: 5.673812ms
+  Min: 3.553393ms
+  Max: 8.861426ms
+  P50 (median): 5.636791ms
+  P95: 7.030562ms
+  P99: 7.430878ms
+  Throughput: 28724.18 KB/s (28.05 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 10.64176885s
+  Average: 5.320884ms
+  Min: 2.687391ms
+  Max: 8.497725ms
+  P50 (median): 5.384888ms
+  P95: 7.212797ms
+  P99: 7.889222ms
+  Throughput: 30629.42 KB/s (29.91 MB/s)
+
+[elliotchance/gedcom Parser]
+  Running 2000 iterations...
+  Total time: 23.535849167s
+  Average: 11.767924ms
+  Min: 8.278421ms
+  Max: 18.476581ms
+  P50 (median): 11.644901ms
+  P95: 15.270343ms
+  P99: 16.68685ms
+  Throughput: 13849.14 KB/s (13.52 MB/s)
+
+[Comparison]
+  ⚠️  ParallelHierarchicalParser is 1.07x SLOWER than cacack (6.6% slower)
+  ✅ ParallelHierarchicalParser is 2.07x FASTER than elliotchance (51.8% faster)
+  📊 cacack is 2.21x FASTER than elliotchance (54.8% faster)
+=== RUN   TestComprehensiveComparison/user-xavier
+
+----------------------------------------------------------------------------------------------------
+Testing: user-xavier
+File: ../../testdata/xavier.ged
+File size: 100.54 KB (102957 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 6.123313541s
+  Average: 3.061656ms
+  Min: 1.854158ms
+  Max: 4.545265ms
+  P50 (median): 3.042158ms
+  P95: 3.776401ms
+  P99: 4.075814ms
+  Throughput: 32839.73 KB/s (32.07 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 6.025607418s
+  Average: 3.012803ms
+  Min: 1.362044ms
+  Max: 5.572471ms
+  P50 (median): 3.068369ms
+  P95: 4.471914ms
+  P99: 4.806492ms
+  Throughput: 33372.23 KB/s (32.59 MB/s)
+
+[elliotchance/gedcom Parser]
+  Running 2000 iterations...
+  Total time: 13.223417539s
+  Average: 6.611708ms
+  Min: 4.936078ms
+  Max: 12.057737ms
+  P50 (median): 6.315728ms
+  P95: 9.005903ms
+  P99: 9.781488ms
+  Throughput: 15206.95 KB/s (14.85 MB/s)
+
+[Comparison]
+  ⚠️  ParallelHierarchicalParser is 1.02x SLOWER than cacack (1.6% slower)
+  ✅ ParallelHierarchicalParser is 2.16x FASTER than elliotchance (53.7% faster)
+  📊 cacack is 2.19x FASTER than elliotchance (54.4% faster)
+=== RUN   TestComprehensiveComparison/user-tree1
+
+----------------------------------------------------------------------------------------------------
+Testing: user-tree1
+File: ../../testdata/tree1.ged
+File size: 211.22 KB (216292 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 12.704333158s
+  Average: 6.352166ms
+  Min: 3.456928ms
+  Max: 10.858751ms
+  P50 (median): 6.341619ms
+  P95: 7.73709ms
+  P99: 8.422968ms
+  Throughput: 33252.07 KB/s (32.47 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 13.542931527s
+  Average: 6.771465ms
+  Min: 3.819796ms
+  Max: 10.297051ms
+  P50 (median): 6.867516ms
+  P95: 8.935283ms
+  P99: 9.588912ms
+  Throughput: 31193.05 KB/s (30.46 MB/s)
+
+[elliotchance/gedcom Parser]
+  Running 2000 iterations...
+  Total time: 31.757523735s
+  Average: 15.878761ms
+  Min: 10.669755ms
+  Max: 24.216424ms
+  P50 (median): 15.448271ms
+  P95: 20.741057ms
+  P99: 22.620851ms
+  Throughput: 13302.21 KB/s (12.99 MB/s)
+
+[Comparison]
+  ✅ ParallelHierarchicalParser is 1.07x FASTER than cacack (6.2% faster)
+  ✅ ParallelHierarchicalParser is 2.50x FASTER than elliotchance (60.0% faster)
+  📊 cacack is 2.34x FASTER than elliotchance (57.4% faster)
+=== RUN   TestComprehensiveComparison/cacack-5.5-royal92
+
+----------------------------------------------------------------------------------------------------
+Testing: cacack-5.5-royal92
+File: ../../../gedcom-go-cacack/testdata/gedcom-5.5/royal92.ged
+File size: 457.99 KB (468984 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 28.410222072s
+  Average: 14.205111ms
+  Min: 8.035784ms
+  Max: 19.869731ms
+  P50 (median): 14.16914ms
+  P95: 16.955474ms
+  P99: 18.045041ms
+  Throughput: 32241.37 KB/s (31.49 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 36.403400961s
+  Average: 18.2017ms
+  Min: 10.426399ms
+  Max: 26.859337ms
+  P50 (median): 18.395183ms
+  P95: 22.672533ms
+  P99: 24.591097ms
+  Throughput: 25162.06 KB/s (24.57 MB/s)
+
+[elliotchance/gedcom Parser]
+  Running 2000 iterations...
+  Total time: 1m18.436788878s
+  Average: 39.218394ms
+  Min: 27.444445ms
+  Max: 55.188846ms
+  P50 (median): 39.063569ms
+  P95: 46.935542ms
+  P99: 50.29704ms
+  Throughput: 11677.99 KB/s (11.40 MB/s)
+
+[Comparison]
+  ✅ ParallelHierarchicalParser is 1.28x FASTER than cacack (22.0% faster)
+  ✅ ParallelHierarchicalParser is 2.76x FASTER than elliotchance (63.8% faster)
+  📊 cacack is 2.15x FASTER than elliotchance (53.6% faster)
+=== RUN   TestComprehensiveComparison/cacack-5.5-pres2020
+
+----------------------------------------------------------------------------------------------------
+Testing: cacack-5.5-pres2020
+File: ../../../gedcom-go-cacack/testdata/gedcom-5.5/pres2020.ged
+File size: 1080.24 KB (1106168 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 42.128648598s
+  Average: 21.064324ms
+  Min: 12.886077ms
+  Max: 31.424494ms
+  P50 (median): 21.123418ms
+  P95: 25.466831ms
+  P99: 27.655733ms
+  Throughput: 51283.02 KB/s (50.08 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 46.466467264s
+  Average: 23.233233ms
+  Min: 15.056613ms
+  Max: 37.139977ms
+  P50 (median): 23.394299ms
+  P95: 29.834062ms
+  P99: 32.5559ms
+  Throughput: 46495.56 KB/s (45.41 MB/s)
+
+[elliotchance/gedcom Parser]
+  Running 2000 iterations...
+  Total time: 2m14.134177466s
+  Average: 67.067088ms
+  Min: 49.339733ms
+  Max: 99.661826ms
+  P50 (median): 66.422755ms
+  P95: 80.998071ms
+  P99: 87.727071ms
+  Throughput: 16106.89 KB/s (15.73 MB/s)
+
+[Comparison]
+  ✅ ParallelHierarchicalParser is 1.10x FASTER than cacack (9.3% faster)
+  ✅ ParallelHierarchicalParser is 3.18x FASTER than elliotchance (68.6% faster)
+  📊 cacack is 2.89x FASTER than elliotchance (65.4% faster)
+=== RUN   TestComprehensiveComparison/cacack-5.5-minimal
+
+----------------------------------------------------------------------------------------------------
+Testing: cacack-5.5-minimal
+File: ../../../gedcom-go-cacack/testdata/gedcom-5.5/minimal.ged
+File size: 0.17 KB (170 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 99.626441ms
+  Average: 49.813µs
+  Min: 33.561µs
+  Max: 405.953µs
+  P50 (median): 46.71µs
+  P95: 72.77µs
+  P99: 115.534µs
+  Throughput: 3332.78 KB/s (3.25 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 12.244322ms
+  Average: 6.122µs
+  Min: 3.035µs
+  Max: 256.938µs
+  P50 (median): 4.026µs
+  P95: 10.836µs
+  P99: 35.514µs
+  Throughput: 27117.87 KB/s (26.48 MB/s)
+
+[elliotchance/gedcom Parser]
+  Running 2000 iterations...
+  Total time: 96.723988ms
+  Average: 48.361µs
+  Min: 17.827µs
+  Max: 36.135409ms
+  P50 (median): 20.282µs
+  P95: 35.603µs
+  P99: 65.319µs
+  Throughput: 3432.84 KB/s (3.35 MB/s)
+
+[Comparison]
+  ⚠️  ParallelHierarchicalParser is 8.14x SLOWER than cacack (713.7% slower)
+  ⚠️  ParallelHierarchicalParser is 1.03x SLOWER than elliotchance (3.0% slower)
+  📊 cacack is 7.90x FASTER than elliotchance (87.3% faster)
+=== RUN   TestComprehensiveComparison/cacack-5.5.1-comprehensive
+
+----------------------------------------------------------------------------------------------------
+Testing: cacack-5.5.1-comprehensive
+File: ../../../gedcom-go-cacack/testdata/gedcom-5.5.1/comprehensive.ged
+File size: 4.58 KB (4693 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 266.909418ms
+  Average: 133.454µs
+  Min: 80.702µs
+  Max: 823.237µs
+  P50 (median): 115.315µs
+  P95: 219.452µs
+  P99: 480.848µs
+  Throughput: 34341.48 KB/s (33.54 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 163.983153ms
+  Average: 81.991µs
+  Min: 51.498µs
+  Max: 672.448µs
+  P50 (median): 63.647µs
+  P95: 138.93µs
+  P99: 421.398µs
+  Throughput: 55896.47 KB/s (54.59 MB/s)
+
+[elliotchance/gedcom Parser]
+  Running 2000 iterations...
+  Total time: 552.409992ms
+  Average: 276.204µs
+  Min: 190.689µs
+  Max: 1.220767ms
+  P50 (median): 234.265µs
+  P95: 411.131µs
+  P99: 890.127µs
+  Throughput: 16592.84 KB/s (16.20 MB/s)
+
+[Comparison]
+  ⚠️  ParallelHierarchicalParser is 1.63x SLOWER than cacack (62.8% slower)
+  ✅ ParallelHierarchicalParser is 2.07x FASTER than elliotchance (51.7% faster)
+  📊 cacack is 3.37x FASTER than elliotchance (70.3% faster)
+=== RUN   TestComprehensiveComparison/cacack-5.5.1-minimal
+
+----------------------------------------------------------------------------------------------------
+Testing: cacack-5.5.1-minimal
+File: ../../../gedcom-go-cacack/testdata/gedcom-5.5.1/minimal.ged
+File size: 0.20 KB (204 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 119.128777ms
+  Average: 59.564µs
+  Min: 34.903µs
+  Max: 715.103µs
+  P50 (median): 53.491µs
+  P95: 94.023µs
+  P99: 151.619µs
+  Throughput: 3344.62 KB/s (3.27 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 15.143609ms
+  Average: 7.571µs
+  Min: 3.335µs
+  Max: 335.927µs
+  P50 (median): 5.198µs
+  P95: 12.979µs
+  P99: 46.269µs
+  Throughput: 26313.40 KB/s (25.70 MB/s)
+
+[elliotchance/gedcom Parser]
+  Running 2000 iterations...
+  Total time: 55.968746ms
+  Average: 27.984µs
+  Min: 19.068µs
+  Max: 435.339µs
+  P50 (median): 22.324µs
+  P95: 40.871µs
+  P99: 100.713µs
+  Throughput: 7119.02 KB/s (6.95 MB/s)
+
+[Comparison]
+  ⚠️  ParallelHierarchicalParser is 7.87x SLOWER than cacack (686.7% slower)
+  ⚠️  ParallelHierarchicalParser is 2.13x SLOWER than elliotchance (112.9% slower)
+  📊 cacack is 3.70x FASTER than elliotchance (72.9% faster)
+
+====================================================================================================
+🎯 PRIMARY RESULT: BYTES-WEIGHTED THROUGHPUT (What Actually Matters)
+====================================================================================================
+
+📊 Overall (All Files):
+   Total bytes parsed: 3.50 MB (across 10 files × 2000 iterations)
+   ParallelHierarchicalParser: 0.02 MB/s
+   cacack/gedcom-go parser:     0.02 MB/s
+   elliotchance/gedcom parser:  0.01 MB/s
+
+   ✅ Parallel vs cacack: 1.16x (16.0% faster)
+   ✅ Parallel vs elliotchance: 2.84x (184.1% faster)
+   📊 cacack vs elliotchance: 2.45x (145.0% faster)
+
+📊 Realistic Files (≥50KB):
+   Total bytes parsed: 3.50 MB (across 7 files × 2000 iterations)
+   ParallelHierarchicalParser: 0.02 MB/s
+   cacack/gedcom-go parser:     0.02 MB/s
+   elliotchance/gedcom parser:  0.01 MB/s
+
+   ✅ Parallel vs cacack: 1.16x (16.2% faster)
+   ✅ Parallel vs elliotchance: 2.84x (184.5% faster)
+   📊 cacack vs elliotchance: 2.45x (144.9% faster)
+
+====================================================================================================
+📦 BUCKETED SUMMARY
+====================================================================================================
+
+Tiny Files (<10KB) (3 files):
+  Files where ParallelHierarchicalParser is faster: 0/3
+  ⚠️  cacack parser wins in this bucket (expected for tiny files)
+
+Medium Files (100KB-1MB) (5 files):
+  Files where ParallelHierarchicalParser is faster: 3/5
+  ✅ ParallelHierarchicalParser wins in this bucket
+
+Large Files (>1MB) (2 files):
+  Files where ParallelHierarchicalParser is faster: 2/2
+  ✅ ParallelHierarchicalParser wins in this bucket
+
+====================================================================================================
+📋 PER-FILE DETAILS
+====================================================================================================
+
+File                                 Size Parallel (ms)  cacack (ms) elliotchance (ms)        P/C        P/E        C/E
+----------------------------------------------------------------------------------------------------
+user-royal92                     488.0 KB        13.97        17.53        40.38       0.80x       0.35x       0.43x
+user-pres2020                   1080.2 KB        22.20        26.44        65.23       0.84x       0.34x       0.41x
+user-gracis                      163.0 KB         5.67         5.32        11.77       1.07x       0.48x       0.45x
+user-xavier                      100.5 KB         3.06         3.01         6.61       1.02x       0.46x       0.46x
+user-tree1                       211.2 KB         6.35         6.77        15.88       0.94x       0.40x       0.43x
+cacack-5.5-royal92               458.0 KB        14.21        18.20        39.22       0.78x       0.36x       0.46x
+cacack-5.5-pres2020             1080.2 KB        21.06        23.23        67.07       0.91x       0.31x       0.35x
+cacack-5.5-minimal                 0.2 KB         0.05         0.01         0.05       8.14x       1.03x       0.13x
+cacack-5.5.1-comprehensive         4.6 KB         0.13         0.08         0.28       1.63x       0.48x       0.30x
+cacack-5.5.1-minimal               0.2 KB         0.06         0.01         0.03       7.87x       2.13x       0.27x
+
+====================================================================================================
+✅ REALISTIC FILES DETAILS (≥50KB)
+====================================================================================================
+
+File                                 Size Parallel (ms)  cacack (ms)      Ratio       Winner
+----------------------------------------------------------------------------------------------------
+user-royal92                     488.0 KB        13.97        17.53       0.80x     Parallel
+user-pres2020                   1080.2 KB        22.20        26.44       0.84x     Parallel
+user-gracis                      163.0 KB         5.67         5.32       1.07x       cacack
+user-xavier                      100.5 KB         3.06         3.01       1.02x       cacack
+user-tree1                       211.2 KB         6.35         6.77       0.94x     Parallel
+cacack-5.5-royal92               458.0 KB        14.21        18.20       0.78x     Parallel
+cacack-5.5-pres2020             1080.2 KB        21.06        23.23       0.91x     Parallel
+
+Realistic files where ParallelHierarchicalParser is faster: 5/7
+
+====================================================================================================
+⚠️  TINY FILES DETAILS (<50KB) - Expected Overhead
+====================================================================================================
+
+File                                 Size Parallel (ms)  cacack (ms)      Ratio       Winner
+----------------------------------------------------------------------------------------------------
+cacack-5.5-minimal                 0.2 KB         0.05         0.01       8.14x       cacack
+cacack-5.5.1-comprehensive         4.6 KB         0.13         0.08       1.63x       cacack
+cacack-5.5.1-minimal               0.2 KB         0.06         0.01       7.87x       cacack
+
+💡 Note: Parallel parser has fixed overhead that dominates on tiny files.
+   This is expected and not relevant for real-world workloads.
+   Use SmartParser (auto-fallback) to automatically use non-parallel parser for files <32KB.
+--- PASS: TestComprehensiveComparison (867.93s)
+    --- PASS: TestComprehensiveComparison/user-royal92 (143.78s)
+    --- PASS: TestComprehensiveComparison/user-pres2020 (227.75s)
+    --- PASS: TestComprehensiveComparison/user-gracis (45.54s)
+    --- PASS: TestComprehensiveComparison/user-xavier (25.39s)
+    --- PASS: TestComprehensiveComparison/user-tree1 (58.02s)
+    --- PASS: TestComprehensiveComparison/cacack-5.5-royal92 (143.27s)
+    --- PASS: TestComprehensiveComparison/cacack-5.5-pres2020 (222.75s)
+    --- PASS: TestComprehensiveComparison/cacack-5.5-minimal (0.23s)
+    --- PASS: TestComprehensiveComparison/cacack-5.5.1-comprehensive (1.00s)
+    --- PASS: TestComprehensiveComparison/cacack-5.5.1-minimal (0.21s)
+PASS
+ok  	github.com/lesfleursdelanuitdev/gedcom-go/scripts/performance_comparison	867.937s

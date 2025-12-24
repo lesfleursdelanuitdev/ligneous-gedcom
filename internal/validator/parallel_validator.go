@@ -3,7 +3,7 @@ package validator
 import (
 	"sync"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // ParallelGedcomValidator runs validators in parallel for better performance.

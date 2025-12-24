@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/duplicate"
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/query"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/duplicate"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/query"
 )
 
 // StressTestMetrics holds comprehensive stress test results

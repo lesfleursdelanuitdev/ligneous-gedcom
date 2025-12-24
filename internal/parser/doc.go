@@ -28,7 +28,7 @@
 //
 //	import (
 //		"fmt"
-//		"github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
+//		"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
 //	)
 //
 //	func main() {
@@ -62,7 +62,7 @@
 //
 //	import (
 //		"fmt"
-//		"github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
+//		"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
 //	)
 //
 //	func main() {

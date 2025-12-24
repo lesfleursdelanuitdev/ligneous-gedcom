@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // generateVeryLargeTree creates a tree with n individuals efficiently

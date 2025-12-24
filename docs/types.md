@@ -52,7 +52,7 @@ The `gedcom` package provides core data structures and types for working with GE
 The gedcom package is part of the GEDCOM Go library:
 
 ```go
-import "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+import "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 ```
 
 ---
@@ -893,8 +893,8 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 func main() {

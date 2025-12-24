@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/cmd/gedcom/internal"
-	"github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/query"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/cmd/gedcom/internal"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/query"
 	"github.com/spf13/cobra"
 )
 

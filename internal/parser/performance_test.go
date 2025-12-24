@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/query"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/query"
 )
 
 // generateLargeGEDCOMFile generates a GEDCOM file with n individuals

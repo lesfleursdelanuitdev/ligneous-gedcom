@@ -1,7 +1,7 @@
 package validator
 
 import (
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // HeaderValidator validates Header (HEAD) record.

@@ -47,7 +47,7 @@ The Query API provides a fluent, builder-style interface for querying GEDCOM gen
 The query package is part of the GEDCOM Go library:
 
 ```go
-import "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/query"
+import "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/query"
 ```
 
 ---
@@ -59,8 +59,8 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/query"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/query"
 )
 
 func main() {

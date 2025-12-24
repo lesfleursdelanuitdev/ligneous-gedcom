@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 func TestXMLExporter_ExportToString(t *testing.T) {

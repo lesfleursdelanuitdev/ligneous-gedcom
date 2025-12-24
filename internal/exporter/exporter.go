@@ -1,7 +1,7 @@
 package exporter
 
 import (
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // Exporter is the interface that all exporters must implement.

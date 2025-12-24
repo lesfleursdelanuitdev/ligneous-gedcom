@@ -1,0 +1,406 @@
+=== RUN   TestComprehensiveComparison
+
+====================================================================================================
+Comprehensive Parser Performance Comparison
+ParallelHierarchicalParser vs cacack/gedcom-go - 2000 iterations per file
+====================================================================================================
+=== RUN   TestComprehensiveComparison/user-royal92
+
+----------------------------------------------------------------------------------------------------
+Testing: user-royal92
+File: ../../testdata/royal92.ged
+File size: 487.96 KB (499666 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 28.214092783s
+  Average: 14.107046ms
+  Min: 7.515371ms
+  Max: 20.746778ms
+  P50 (median): 14.13226ms
+  P95: 17.809795ms
+  P99: 19.290215ms
+  Throughput: 34589.46 KB/s (33.78 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 37.172911447s
+  Average: 18.586455ms
+  Min: 10.326404ms
+  Max: 29.032094ms
+  P50 (median): 18.932634ms
+  P95: 23.495628ms
+  P99: 25.462393ms
+  Throughput: 26253.26 KB/s (25.64 MB/s)
+
+[Comparison]
+  ✅ ParallelHierarchicalParser is 1.32x FASTER (24.1% faster)
+  Throughput difference: 8336.20 KB/s
+=== RUN   TestComprehensiveComparison/user-pres2020
+
+----------------------------------------------------------------------------------------------------
+Testing: user-pres2020
+File: ../../testdata/pres2020.ged
+File size: 1080.24 KB (1106168 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 45.881852676s
+  Average: 22.940926ms
+  Min: 13.828062ms
+  Max: 36.115893ms
+  P50 (median): 22.819174ms
+  P95: 28.325486ms
+  P99: 30.498744ms
+  Throughput: 47087.99 KB/s (45.98 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 50.188742453s
+  Average: 25.094371ms
+  Min: 15.186016ms
+  Max: 41.498296ms
+  P50 (median): 25.388453ms
+  P95: 32.799345ms
+  P99: 37.006761ms
+  Throughput: 43047.19 KB/s (42.04 MB/s)
+
+[Comparison]
+  ✅ ParallelHierarchicalParser is 1.09x FASTER (8.6% faster)
+  Throughput difference: 4040.80 KB/s
+=== RUN   TestComprehensiveComparison/user-gracis
+
+----------------------------------------------------------------------------------------------------
+Testing: user-gracis
+File: ../../testdata/gracis.ged
+File size: 162.98 KB (166887 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 11.431103426s
+  Average: 5.715551ms
+  Min: 3.218891ms
+  Max: 10.312343ms
+  P50 (median): 5.659954ms
+  P95: 7.093372ms
+  P99: 7.750337ms
+  Throughput: 28514.41 KB/s (27.85 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 10.268943194s
+  Average: 5.134471ms
+  Min: 2.611481ms
+  Max: 9.084204ms
+  P50 (median): 5.235681ms
+  P95: 7.201767ms
+  P99: 7.892111ms
+  Throughput: 31741.46 KB/s (31.00 MB/s)
+
+[Comparison]
+  ⚠️  ParallelHierarchicalParser is 1.11x SLOWER (11.3% slower)
+  Throughput difference: -3227.04 KB/s
+=== RUN   TestComprehensiveComparison/user-xavier
+
+----------------------------------------------------------------------------------------------------
+Testing: user-xavier
+File: ../../testdata/xavier.ged
+File size: 100.54 KB (102957 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 5.351850038s
+  Average: 2.675925ms
+  Min: 1.542334ms
+  Max: 4.739812ms
+  P50 (median): 2.641056ms
+  P95: 3.529971ms
+  P99: 3.90641ms
+  Throughput: 37573.53 KB/s (36.69 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 5.625786385s
+  Average: 2.812893ms
+  Min: 1.308379ms
+  Max: 6.131076ms
+  P50 (median): 2.834588ms
+  P95: 4.183859ms
+  P99: 4.701633ms
+  Throughput: 35743.96 KB/s (34.91 MB/s)
+
+[Comparison]
+  ✅ ParallelHierarchicalParser is 1.05x FASTER (4.9% faster)
+  Throughput difference: 1829.57 KB/s
+=== RUN   TestComprehensiveComparison/user-tree1
+
+----------------------------------------------------------------------------------------------------
+Testing: user-tree1
+File: ../../testdata/tree1.ged
+File size: 211.22 KB (216292 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 12.605161057s
+  Average: 6.30258ms
+  Min: 3.200162ms
+  Max: 11.586611ms
+  P50 (median): 6.264008ms
+  P95: 7.742054ms
+  P99: 8.41289ms
+  Throughput: 33513.68 KB/s (32.73 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 14.746149594s
+  Average: 7.373074ms
+  Min: 3.860751ms
+  Max: 12.033317ms
+  P50 (median): 7.394408ms
+  P95: 9.295805ms
+  P99: 9.893259ms
+  Throughput: 28647.84 KB/s (27.98 MB/s)
+
+[Comparison]
+  ✅ ParallelHierarchicalParser is 1.17x FASTER (14.5% faster)
+  Throughput difference: 4865.84 KB/s
+=== RUN   TestComprehensiveComparison/cacack-5.5-royal92
+
+----------------------------------------------------------------------------------------------------
+Testing: cacack-5.5-royal92
+File: ../../../gedcom-go-cacack/testdata/gedcom-5.5/royal92.ged
+File size: 457.99 KB (468984 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 27.558924014s
+  Average: 13.779462ms
+  Min: 7.536994ms
+  Max: 19.689711ms
+  P50 (median): 13.959251ms
+  P95: 16.606495ms
+  P99: 17.782646ms
+  Throughput: 33237.31 KB/s (32.46 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 35.988959439s
+  Average: 17.994479ms
+  Min: 10.94513ms
+  Max: 28.462465ms
+  P50 (median): 18.285636ms
+  P95: 22.608196ms
+  P99: 24.578359ms
+  Throughput: 25451.82 KB/s (24.86 MB/s)
+
+[Comparison]
+  ✅ ParallelHierarchicalParser is 1.31x FASTER (23.4% faster)
+  Throughput difference: 7785.49 KB/s
+=== RUN   TestComprehensiveComparison/cacack-5.5-pres2020
+
+----------------------------------------------------------------------------------------------------
+Testing: cacack-5.5-pres2020
+File: ../../../gedcom-go-cacack/testdata/gedcom-5.5/pres2020.ged
+File size: 1080.24 KB (1106168 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 46.409814157s
+  Average: 23.204907ms
+  Min: 14.601493ms
+  Max: 35.532933ms
+  P50 (median): 23.155685ms
+  P95: 27.959875ms
+  P99: 30.738308ms
+  Throughput: 46552.32 KB/s (45.46 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 50.628432753s
+  Average: 25.314216ms
+  Min: 15.191264ms
+  Max: 37.940476ms
+  P50 (median): 25.503317ms
+  P95: 32.577541ms
+  P99: 35.719224ms
+  Throughput: 42673.34 KB/s (41.67 MB/s)
+
+[Comparison]
+  ✅ ParallelHierarchicalParser is 1.09x FASTER (8.3% faster)
+  Throughput difference: 3878.98 KB/s
+=== RUN   TestComprehensiveComparison/cacack-5.5-minimal
+
+----------------------------------------------------------------------------------------------------
+Testing: cacack-5.5-minimal
+File: ../../../gedcom-go-cacack/testdata/gedcom-5.5/minimal.ged
+File size: 0.17 KB (170 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 96.559046ms
+  Average: 48.279µs
+  Min: 32.681µs
+  Max: 415.581µs
+  P50 (median): 44.298µs
+  P95: 70.387µs
+  P99: 117.137µs
+  Throughput: 3438.67 KB/s (3.36 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 11.61822ms
+  Average: 5.809µs
+  Min: 2.754µs
+  Max: 306.966µs
+  P50 (median): 3.936µs
+  P95: 11.057µs
+  P99: 25.989µs
+  Throughput: 28579.04 KB/s (27.91 MB/s)
+
+[Comparison]
+  ⚠️  ParallelHierarchicalParser is 8.31x SLOWER (731.1% slower)
+  Throughput difference: -25140.37 KB/s
+=== RUN   TestComprehensiveComparison/cacack-5.5.1-comprehensive
+
+----------------------------------------------------------------------------------------------------
+Testing: cacack-5.5.1-comprehensive
+File: ../../../gedcom-go-cacack/testdata/gedcom-5.5.1/comprehensive.ged
+File size: 4.58 KB (4693 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 248.798743ms
+  Average: 124.399µs
+  Min: 79.4µs
+  Max: 907.718µs
+  P50 (median): 103.567µs
+  P95: 207.746µs
+  P99: 428.14µs
+  Throughput: 36841.19 KB/s (35.98 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 159.373429ms
+  Average: 79.686µs
+  Min: 50.597µs
+  Max: 593.511µs
+  P50 (median): 63.536µs
+  P95: 119.772µs
+  P99: 416.402µs
+  Throughput: 57513.34 KB/s (56.17 MB/s)
+
+[Comparison]
+  ⚠️  ParallelHierarchicalParser is 1.56x SLOWER (56.1% slower)
+  Throughput difference: -20672.14 KB/s
+=== RUN   TestComprehensiveComparison/cacack-5.5.1-minimal
+
+----------------------------------------------------------------------------------------------------
+Testing: cacack-5.5.1-minimal
+File: ../../../gedcom-go-cacack/testdata/gedcom-5.5.1/minimal.ged
+File size: 0.20 KB (204 bytes)
+
+[ParallelHierarchicalParser]
+  Running 2000 iterations...
+  Total time: 97.916487ms
+  Average: 48.958µs
+  Min: 33.681µs
+  Max: 500.851µs
+  P50 (median): 45.239µs
+  P95: 72.98µs
+  P99: 105.36µs
+  Throughput: 4069.18 KB/s (3.97 MB/s)
+
+[cacack/gedcom-go Parser]
+  Running 2000 iterations...
+  Total time: 11.428081ms
+  Average: 5.714µs
+  Min: 3.174µs
+  Max: 190.969µs
+  P50 (median): 4.246µs
+  P95: 8.723µs
+  P99: 29.064µs
+  Throughput: 34865.02 KB/s (34.05 MB/s)
+
+[Comparison]
+  ⚠️  ParallelHierarchicalParser is 8.57x SLOWER (756.8% slower)
+  Throughput difference: -30795.85 KB/s
+
+====================================================================================================
+SUMMARY - All Files
+====================================================================================================
+
+File                                 Size Parallel (ms)  cacack (ms)      Ratio       Winner
+----------------------------------------------------------------------------------------------------
+user-royal92                     488.0 KB        14.11        18.59       0.76x     Parallel
+user-pres2020                   1080.2 KB        22.94        25.09       0.91x     Parallel
+user-gracis                      163.0 KB         5.72         5.13       1.11x       cacack
+user-xavier                      100.5 KB         2.68         2.81       0.95x     Parallel
+user-tree1                       211.2 KB         6.30         7.37       0.85x     Parallel
+cacack-5.5-royal92               458.0 KB        13.78        17.99       0.77x     Parallel
+cacack-5.5-pres2020             1080.2 KB        23.20        25.31       0.92x     Parallel
+cacack-5.5-minimal                 0.2 KB         0.05         0.01       8.31x       cacack
+cacack-5.5.1-comprehensive         4.6 KB         0.12         0.08       1.56x       cacack
+cacack-5.5.1-minimal               0.2 KB         0.05         0.01       8.57x       cacack
+
+====================================================================================================
+REALISTIC FILES SUMMARY (≥100KB) - What Actually Matters
+====================================================================================================
+
+File                                 Size Parallel (ms)  cacack (ms)      Ratio       Winner
+----------------------------------------------------------------------------------------------------
+user-royal92                     488.0 KB        14.11        18.59       0.76x     Parallel
+user-pres2020                   1080.2 KB        22.94        25.09       0.91x     Parallel
+user-gracis                      163.0 KB         5.72         5.13       1.11x       cacack
+user-xavier                      100.5 KB         2.68         2.81       0.95x     Parallel
+user-tree1                       211.2 KB         6.30         7.37       0.85x     Parallel
+cacack-5.5-royal92               458.0 KB        13.78        17.99       0.77x     Parallel
+cacack-5.5-pres2020             1080.2 KB        23.20        25.31       0.92x     Parallel
+
+----------------------------------------------------------------------------------------------------
+BYTES-WEIGHTED ANALYSIS (Realistic Files Only)
+----------------------------------------------------------------------------------------------------
+Total bytes (realistic): 3.50 MB
+ParallelHierarchicalParser total time: 2m57.452794s
+cacack parser total time:              3m24.619918s
+ParallelHierarchicalParser throughput: 0.02 MB/s
+cacack parser throughput:              0.02 MB/s
+
+🎉 Bytes-weighted speedup: 1.15x (15.3% faster)
+
+Realistic files where ParallelHierarchicalParser is faster: 6/7
+
+====================================================================================================
+TINY FILES SUMMARY (<100KB) - Expected Overhead
+====================================================================================================
+
+File                                 Size Parallel (ms)  cacack (ms)      Ratio       Winner
+----------------------------------------------------------------------------------------------------
+cacack-5.5-minimal                 0.2 KB         0.05         0.01       8.31x       cacack
+cacack-5.5.1-comprehensive         4.6 KB         0.12         0.08       1.56x       cacack
+cacack-5.5.1-minimal               0.2 KB         0.05         0.01       8.57x       cacack
+
+Note: Parallel parser has fixed overhead that dominates on tiny files.
+      This is expected and not relevant for real-world workloads.
+
+====================================================================================================
+OVERALL STATISTICS (All Files - For Reference)
+====================================================================================================
+
+Files where ParallelHierarchicalParser is faster: 6/10
+Files where ParallelHierarchicalParser is slower: 4/10
+
+⚠️  Note: Simple average ratio is misleading due to tiny files.
+   See 'REALISTIC FILES SUMMARY' above for the true performance story.
+--- PASS: TestComprehensiveComparison (382.83s)
+    --- PASS: TestComprehensiveComparison/user-royal92 (65.40s)
+    --- PASS: TestComprehensiveComparison/user-pres2020 (96.08s)
+    --- PASS: TestComprehensiveComparison/user-gracis (21.72s)
+    --- PASS: TestComprehensiveComparison/user-xavier (10.99s)
+    --- PASS: TestComprehensiveComparison/user-tree1 (27.36s)
+    --- PASS: TestComprehensiveComparison/cacack-5.5-royal92 (63.56s)
+    --- PASS: TestComprehensiveComparison/cacack-5.5-pres2020 (97.05s)
+    --- PASS: TestComprehensiveComparison/cacack-5.5-minimal (0.12s)
+    --- PASS: TestComprehensiveComparison/cacack-5.5.1-comprehensive (0.42s)
+    --- PASS: TestComprehensiveComparison/cacack-5.5.1-minimal (0.12s)
+PASS
+ok  	github.com/lesfleursdelanuitdev/gedcom-go/scripts/performance_comparison	382.830s

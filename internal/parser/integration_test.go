@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // TestIntegration_SampleGed tests parsing with the sample.ged file

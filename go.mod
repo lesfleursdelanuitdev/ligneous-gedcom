@@ -1,4 +1,4 @@
-module github.com/lesfleursdelanuitdev/gedcom-go
+module github.com/lesfleursdelanuitdev/ligneous-gedcom
 
 go 1.23.0
 
@@ -12,8 +12,11 @@ toolchain go1.23.5
 
 require (
 	github.com/c-bata/go-prompt v0.2.6
+	github.com/cacack/gedcom-go v0.3.0
 	github.com/dgraph-io/badger/v4 v4.9.0
+	github.com/elliotchance/gedcom/v39 v39.6.0
 	github.com/fatih/color v1.18.0
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/schollz/progressbar/v3 v3.18.0
 	github.com/spf13/cobra v1.10.2
@@ -29,7 +32,6 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/flatbuffers v25.2.10+incompatible // indirect
-	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -47,5 +49,8 @@ require (
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/term v0.34.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
 	google.golang.org/protobuf v1.36.7 // indirect
 )
+
+replace github.com/elliotchance/gedcom/v39 => ../gedcom-elliotchance

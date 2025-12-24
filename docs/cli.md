@@ -24,7 +24,7 @@ Complete reference guide for the GEDCOM command-line interface.
 ### From Source
 
 ```bash
-git clone https://github.com/lesfleursdelanuitdev/gedcom-go.git
+git clone https://github.com/lesfleursdelanuitdev/ligneous-gedcom.git
 cd gedcom-go
 go build -o gedcom ./cmd/gedcom
 ```
@@ -32,7 +32,7 @@ go build -o gedcom ./cmd/gedcom
 ### Using Go Install
 
 ```bash
-go install github.com/lesfleursdelanuitdev/gedcom-go/cmd/gedcom@latest
+go install github.com/lesfleursdelanuitdev/ligneous-gedcom/cmd/gedcom@latest
 ```
 
 ### Verify Installation

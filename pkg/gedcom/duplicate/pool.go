@@ -3,7 +3,7 @@ package duplicate
 import (
 	"sync"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // Memory pools for temporary data structures to reduce allocations.

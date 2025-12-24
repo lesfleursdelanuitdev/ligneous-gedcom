@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/cmd/gedcom/commands"
-	"github.com/lesfleursdelanuitdev/gedcom-go/cmd/gedcom/internal"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/cmd/gedcom/commands"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/cmd/gedcom/internal"
 	"github.com/spf13/cobra"
 )
 

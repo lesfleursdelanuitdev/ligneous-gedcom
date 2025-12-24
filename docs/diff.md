@@ -27,7 +27,7 @@ The system also tracks **change history**, recording who, when, and what changed
 The diff package is part of the main gedcom-go module:
 
 ```go
-import "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/diff"
+import "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/diff"
 ```
 
 ---
@@ -41,8 +41,8 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom/diff"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/diff"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
 )
 
 func main() {

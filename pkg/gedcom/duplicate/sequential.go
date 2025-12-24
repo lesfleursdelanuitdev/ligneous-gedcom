@@ -1,7 +1,7 @@
 package duplicate
 
 import (
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // findDuplicatesSequential finds duplicates using sequential processing.

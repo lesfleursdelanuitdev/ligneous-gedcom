@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 // CSVExporter exports GEDCOM data to CSV format

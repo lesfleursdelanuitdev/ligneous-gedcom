@@ -49,7 +49,7 @@ The validator package provides comprehensive validation functionality for GEDCOM
 The validator package is part of the GEDCOM Go library:
 
 ```go
-import "github.com/lesfleursdelanuitdev/gedcom-go/internal/validator"
+import "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/validator"
 ```
 
 ---
@@ -74,9 +74,9 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/validator"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/validator"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 func main() {
@@ -348,9 +348,9 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/validator"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/validator"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 func main() {
@@ -685,9 +685,9 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/parser"
-    "github.com/lesfleursdelanuitdev/gedcom-go/internal/validator"
-    "github.com/lesfleursdelanuitdev/gedcom-go/pkg/gedcom"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/validator"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
 )
 
 func main() {
