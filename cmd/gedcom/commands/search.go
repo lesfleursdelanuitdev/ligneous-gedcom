@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/lesfleursdelanuitdev/ligneous-gedcom/cmd/gedcom/internal"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/query"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/parser"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/types"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/query"
 	"github.com/spf13/cobra"
 )
 
@@ -255,7 +255,7 @@ func applyBirthDateFilters(cmd *cobra.Command, filterQuery *query.FilterQuery) (
 	return filterQuery, nil
 }
 
-func sortResults(results []*gedcom.IndividualRecord, sortField string, desc bool) {
+func sortResults(results []*types.IndividualRecord, sortField string, desc bool) {
 	switch sortField {
 	case "name":
 		sort.Slice(results, func(i, j int) bool {
@@ -301,7 +301,7 @@ func sortResults(results []*gedcom.IndividualRecord, sortField string, desc bool
 	}
 }
 
-func formatSearchResults(results []*gedcom.IndividualRecord, format, fields string, compact bool, outputFile string) error {
+func formatSearchResults(results []*types.IndividualRecord, format, fields string, compact bool, outputFile string) error {
 	// Determine fields to display
 	fieldList := determineFields(fields, compact)
 
@@ -331,7 +331,7 @@ func determineFields(fields string, compact bool) []string {
 	return []string{"xref", "name", "sex", "birth_date", "death_date"}
 }
 
-func formatTable(results []*gedcom.IndividualRecord, fields []string, outputFile string) error {
+func formatTable(results []*types.IndividualRecord, fields []string, outputFile string) error {
 	if len(results) == 0 {
 		internal.PrintInfo("  No results to display\n")
 		return nil
@@ -379,7 +379,7 @@ func formatTable(results []*gedcom.IndividualRecord, fields []string, outputFile
 	return nil
 }
 
-func formatJSON(results []*gedcom.IndividualRecord, fields []string, outputFile string) error {
+func formatJSON(results []*types.IndividualRecord, fields []string, outputFile string) error {
 	// Build JSON structure
 	jsonResults := make([]map[string]interface{}, len(results))
 	for i, indi := range results {
@@ -415,7 +415,7 @@ func formatJSON(results []*gedcom.IndividualRecord, fields []string, outputFile 
 	return nil
 }
 
-func formatList(results []*gedcom.IndividualRecord, outputFile string) error {
+func formatList(results []*types.IndividualRecord, outputFile string) error {
 	// Simple list of xref IDs
 	if outputFile != "" {
 		file, err := os.Create(outputFile)
@@ -436,7 +436,7 @@ func formatList(results []*gedcom.IndividualRecord, outputFile string) error {
 	return nil
 }
 
-func getFieldValue(indi *gedcom.IndividualRecord, field string) string {
+func getFieldValue(indi *types.IndividualRecord, field string) string {
 	switch field {
 	case "xref":
 		return indi.XrefID()

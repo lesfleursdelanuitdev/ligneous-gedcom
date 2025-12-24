@@ -52,7 +52,7 @@ The `gedcom` package provides core data structures and types for working with GE
 The gedcom package is part of the GEDCOM Go library:
 
 ```go
-import "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
+import "github.com/lesfleursdelanuitdev/ligneous-gedcom/types"
 ```
 
 ---
@@ -282,6 +282,11 @@ func (ir *IndividualRecord) GetName() string
 func (ir *IndividualRecord) GetNames() []string
 func (ir *IndividualRecord) GetGivenName() string
 func (ir *IndividualRecord) GetSurname() string
+func (ir *IndividualRecord) GetNamesParsed() ([]*GedcomName, error)
+func (ir *IndividualRecord) GetPrimaryName() (*GedcomName, error)
+func (ir *IndividualRecord) GetNameByType(nameType NameType) (*GedcomName, error)
+func (ir *IndividualRecord) GetBirthName() (*GedcomName, error)
+func (ir *IndividualRecord) GetMarriedName() (*GedcomName, error)
 
 // Demographics
 func (ir *IndividualRecord) GetSex() string
@@ -328,6 +333,20 @@ fmt.Printf("Death: %s in %s\n", indi.GetDeathDate(), indi.GetDeathPlace())
 birthDate, _ := indi.GetBirthDateParsed()
 if birthDate != nil && birthDate.IsValid() {
     fmt.Printf("Birth Year: %d\n", birthDate.Year)
+}
+
+// Parsed names
+names, _ := indi.GetNamesParsed()
+for _, name := range names {
+    fmt.Printf("Name Type: %s\n", name.Type)
+    fmt.Printf("Full Name: %s\n", name.FullName())
+    fmt.Printf("Given: %s, Surname: %s\n", name.Given, name.Surname)
+}
+
+// Get birth name
+birthName, _ := indi.GetBirthName()
+if birthName != nil {
+    fmt.Printf("Birth Name: %s\n", birthName.FullName())
 }
 ```
 
@@ -547,7 +566,86 @@ func (mr *MultimediaRecord) GetNotes() []string
 
 ---
 
-## Date and Place Types
+## Date, Place, and Name Types
+
+### GedcomName
+
+Represents a parsed GEDCOM name with structured components.
+
+#### Structure
+
+```go
+type GedcomName struct {
+    Original string   // Original GEDCOM name string
+    Type     NameType // birth, married, aka, religious, etc.
+
+    // Name components (GEDCOM 5.5.1 sub-tags)
+    Prefix        string // NPFX: Dr., Mr., Mrs., etc.
+    Given         string // GIVN: First/middle names
+    Nickname      string // NICK: Nickname
+    SurnamePrefix string // SPFX: van, de, la, etc.
+    Surname       string // SURN: Last name
+    Suffix        string // NSFX: Jr., Sr., III, etc.
+
+    // Parsed status
+    IsParsed   bool
+    ParseError error
+}
+```
+
+#### Name Types
+
+```go
+const (
+    NameTypeBirth     NameType = "birth"
+    NameTypeMarried   NameType = "married"
+    NameTypeAka       NameType = "aka"
+    NameTypeReligious NameType = "religious"
+    NameTypeOther     NameType = "other"
+    NameTypeUnknown   NameType = "unknown"
+)
+```
+
+#### Methods
+
+```go
+// Parse name from GedcomLine
+func ParseName(nameLine *GedcomLine) (*GedcomName, error)
+
+// Name methods
+func (gn *GedcomName) FullName() string
+func (gn *GedcomName) IsValid() bool
+func (gn *GedcomName) GetGivenName() string
+func (gn *GedcomName) GetSurname() string
+func (gn *GedcomName) GetFullSurname() string
+func (gn *GedcomName) HasPrefix() bool
+func (gn *GedcomName) HasSuffix() bool
+func (gn *GedcomName) HasNickname() bool
+func (gn *GedcomName) HasSurnamePrefix() bool
+```
+
+#### Example
+
+```go
+nameLine := gedcom.NewGedcomLine(1, "NAME", "John /Doe/", "")
+name, err := gedcom.ParseName(nameLine)
+if err != nil {
+    panic(err)
+}
+
+fmt.Printf("Given: %s\n", name.Given)
+fmt.Printf("Surname: %s\n", name.Surname)
+fmt.Printf("Full Name: %s\n", name.FullName())
+```
+
+#### Supported Formats
+
+- Sub-tags: NPFX, GIVN, NICK, SPFX, SURN, NSFX, TYPE
+- NAME value: `"John /Doe/"` (structured)
+- NAME value: `"John Doe"` (unstructured)
+- Multiple NAME records per individual (GEDCOM 5.5.1)
+
+---
 
 ### GedcomDate
 
@@ -878,6 +976,7 @@ case gedcom.RecordTypeINDI:
 |------|-------------|
 | `GedcomDate` | Parsed date with components |
 | `GedcomPlace` | Parsed place with hierarchy |
+| `GedcomName` | Parsed name with components |
 | `GedcomError` | Error with severity |
 | `ErrorManager` | Error collection manager |
 | `RecordFactory` | Record creation factory |
@@ -893,8 +992,8 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
-    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/types"
 )
 
 func main() {

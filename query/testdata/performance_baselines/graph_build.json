@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-12-24T04:42:36.566110147+01:00",
+  "test_name": "graph_build",
+  "dataset_size": 10000,
+  "metrics": {
+    "build_time_ms": 185,
+    "dataset_size": 10000,
+    "edges": 29998,
+    "nodes": 22500
+  }
+}

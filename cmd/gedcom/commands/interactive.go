@@ -8,9 +8,9 @@ import (
 
 	"github.com/c-bata/go-prompt"
 	"github.com/lesfleursdelanuitdev/ligneous-gedcom/cmd/gedcom/internal"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/query"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/parser"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/types"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/query"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +24,7 @@ var interactiveCmd = &cobra.Command{
 
 // InteractiveState holds the state for interactive mode
 type InteractiveState struct {
-	tree  *gedcom.GedcomTree
+	tree  *types.GedcomTree
 	graph *query.Graph
 	query *query.QueryBuilder
 }
@@ -362,7 +362,7 @@ func showIndividual(xref string) {
 		return
 	}
 
-	indi, ok := record.(*gedcom.IndividualRecord)
+	indi, ok := record.(*types.IndividualRecord)
 	if !ok {
 		internal.PrintError("Record is not an individual: %s\n", xref)
 		return
@@ -388,7 +388,7 @@ func showFamily(xref string) {
 		return
 	}
 
-	fam, ok := record.(*gedcom.FamilyRecord)
+	fam, ok := record.(*types.FamilyRecord)
 	if !ok {
 		internal.PrintError("Record is not a family: %s\n", xref)
 		return

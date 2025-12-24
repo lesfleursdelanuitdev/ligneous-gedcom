@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/lesfleursdelanuitdev/ligneous-gedcom/cmd/gedcom/internal"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/validator"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/parser"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/validator"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/types"
 	"github.com/spf13/cobra"
 )
 
@@ -72,7 +72,7 @@ func runQuality(cmd *cobra.Command, args []string) error {
 
 	// Run validation
 	internal.PrintInfo("ℹ Running validation...\n")
-	errorManager := gedcom.NewErrorManager()
+	errorManager := types.NewErrorManager()
 	basicValidator := validator.NewGedcomValidator(errorManager)
 	if advanced {
 		internal.PrintInfo("  Including advanced validation checks\n")
@@ -177,7 +177,7 @@ type QualityScore struct {
 	Accuracy     float64 `json:"accuracy"`
 }
 
-func buildQualityReport(tree *gedcom.GedcomTree, parseErrors []*gedcom.GedcomError, validationErrors []*gedcom.GedcomError, minSeverity string, advanced bool) *QualityReport {
+func buildQualityReport(tree *types.GedcomTree, parseErrors []*types.GedcomError, validationErrors []*types.GedcomError, minSeverity string, advanced bool) *QualityReport {
 	// Filter errors by severity
 	filteredErrors := filterErrorsBySeverity(validationErrors, minSeverity)
 	allErrors := append(parseErrors, filteredErrors...)
@@ -226,12 +226,12 @@ func buildQualityReport(tree *gedcom.GedcomTree, parseErrors []*gedcom.GedcomErr
 	}
 }
 
-func calculateCompleteness(allIndi map[string]gedcom.Record, allFam map[string]gedcom.Record) CompletenessMetrics {
+func calculateCompleteness(allIndi map[string]types.Record, allFam map[string]types.Record) CompletenessMetrics {
 	var withNames, withBirthDates, withBirthPlaces, withDeathDates int
 	var withMarriageDates int
 
 	for _, record := range allIndi {
-		indi := record.(*gedcom.IndividualRecord)
+		indi := record.(*types.IndividualRecord)
 		if indi.GetName() != "" {
 			withNames++
 		}
@@ -247,7 +247,7 @@ func calculateCompleteness(allIndi map[string]gedcom.Record, allFam map[string]g
 	}
 
 	for _, record := range allFam {
-		fam := record.(*gedcom.FamilyRecord)
+		fam := record.(*types.FamilyRecord)
 		if fam.GetMarriageDate() != "" {
 			withMarriageDates++
 		}
@@ -281,7 +281,7 @@ func calculateCompleteness(allIndi map[string]gedcom.Record, allFam map[string]g
 	}
 }
 
-func calculateConsistency(errors []*gedcom.GedcomError) ConsistencyMetrics {
+func calculateConsistency(errors []*types.GedcomError) ConsistencyMetrics {
 	var dateIssues, relationshipIssues, crossRefIssues int
 
 	for _, err := range errors {
@@ -304,20 +304,20 @@ func calculateConsistency(errors []*gedcom.GedcomError) ConsistencyMetrics {
 	}
 }
 
-func calculateErrorSummary(errors []*gedcom.GedcomError) ErrorSummary {
+func calculateErrorSummary(errors []*types.GedcomError) ErrorSummary {
 	summary := ErrorSummary{
 		ByType: make(map[string]int),
 	}
 
 	for _, err := range errors {
 		switch err.Severity {
-		case gedcom.SeveritySevere:
+		case types.SeveritySevere:
 			summary.Severe++
-		case gedcom.SeverityWarning:
+		case types.SeverityWarning:
 			summary.Warning++
-		case gedcom.SeverityInfo:
+		case types.SeverityInfo:
 			summary.Info++
-		case gedcom.SeverityHint:
+		case types.SeverityHint:
 			summary.Hint++
 		}
 

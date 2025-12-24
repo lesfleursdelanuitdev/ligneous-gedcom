@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/lesfleursdelanuitdev/ligneous-gedcom/cmd/gedcom/internal"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/exporter"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/exporter"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/parser"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/types"
 	"github.com/spf13/cobra"
 )
 
@@ -240,10 +240,10 @@ func runParseCheck(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func exportTree(tree *gedcom.GedcomTree, outputFile string, format string, config *internal.Config) error {
+func exportTree(tree *types.GedcomTree, outputFile string, format string, config *internal.Config) error {
 	switch format {
 	case "json":
-		exporter := exporter.NewJsonExporter(gedcom.NewErrorManager())
+		exporter := exporter.NewJsonExporter(types.NewErrorManager())
 		return exporter.ExportToFile(tree, outputFile)
 	case "xml":
 		// XML export will be implemented in export command

@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/lesfleursdelanuitdev/ligneous-gedcom/cmd/gedcom/internal"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/diff"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/parser"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/diff"
 	"github.com/spf13/cobra"
 )
 

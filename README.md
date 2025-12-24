@@ -60,9 +60,9 @@ ligneous-gedcom helps you:
 
 - **Find relationships** — Discover how people are connected, calculate degrees of relationship, trace family lines
 - **Detect potential duplicates** — Identify records that might refer to the same person, with explanations and confidence scores
-- **Validate data quality** — Understand what's missing, what's inconsistent, and what needs attention
-- **Explore interactively** — Navigate family trees naturally, ask questions, follow connections
-- **Export meaningful subsets** — Extract specific branches, regions, or time periods for sharing or analysis
+- **Validate data quality** — Understand what's missing, what's inconsistent, and what needs attention ✅
+- **Explore interactively** — Navigate family trees naturally, ask questions, follow connections ✅
+- **Export meaningful subsets** — Extract specific branches, regions, or time periods for sharing or analysis ⚠️ (Branch export: ✅, Region/Time filters: 🔄 In progress)
 
 ## What This Tool Does Not Do
 
@@ -242,9 +242,9 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
-    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/query"
-    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/duplicate"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/query"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/duplicate"
 )
 
 func main() {
@@ -485,17 +485,17 @@ This means:
 
 ```
 gedcom-go/
-├── pkg/gedcom/          # Public API
-│   ├── Core types       # Tree, Record, Line, Error
-│   ├── Record types      # Individual, Family, Note, etc.
-│   ├── query/           # Graph-based Query API
-│   ├── duplicate/       # Duplicate detection system
-│   └── diff/            # GEDCOM diff system
-├── internal/            # Implementation
-│   ├── parser/         # Parsing logic
-│   ├── validator/      # Validation logic
-│   └── exporter/       # Export functionality
-└── cmd/gedcom/         # CLI application
+├── types/               # Core GEDCOM types and data structures
+│   ├── Tree, Record, Line, Error
+│   ├── Individual, Family, Note, etc.
+│   ├── Date, Name, Place, Event types
+├── parser/              # Parsing logic
+├── validator/           # Validation logic
+├── exporter/            # Export functionality
+├── query/               # Graph-based Query API
+├── diff/                # GEDCOM diff system
+├── duplicate/           # Duplicate detection system
+└── cmd/gedcom/          # CLI application
 ```
 
 **Design Principles:**
@@ -606,15 +606,15 @@ go test -v -run TestStress_5M_Comprehensive -timeout 30m
 
 ```bash
 # Query performance tests
-go test -v -run TestPerformance_100K ./pkg/gedcom/query/...
-go test -v -run TestPerformance_500K ./pkg/gedcom/query/...
+go test -v -run TestPerformance_100K ./query/...
+go test -v -run TestPerformance_500K ./query/...
 
 # Parser performance tests
-go test -v -run TestPerformance_Parse_100K ./internal/parser/...
-go test -v -run TestPerformance_Parse_500K ./internal/parser/...
+go test -v -run TestPerformance_Parse_100K ./parser/...
+go test -v -run TestPerformance_Parse_500K ./parser/...
 
 # Duplicate detection performance tests
-go test -v -run TestPerformance_DuplicateDetection_100K ./pkg/gedcom/duplicate/...
+go test -v -run TestPerformance_DuplicateDetection_100K ./duplicate/...
 ```
 
 **Run benchmarks:**

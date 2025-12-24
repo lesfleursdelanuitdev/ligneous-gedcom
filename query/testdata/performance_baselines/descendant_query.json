@@ -1,0 +1,10 @@
+{
+  "timestamp": "2025-12-24T04:42:36.792085604+01:00",
+  "test_name": "descendant_query",
+  "dataset_size": 5000,
+  "metrics": {
+    "dataset_size": 5000,
+    "descendant_count": 2,
+    "query_time_ms": 0
+  }
+}

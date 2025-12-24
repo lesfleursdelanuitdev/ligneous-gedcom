@@ -47,7 +47,7 @@ The Query API provides a fluent, builder-style interface for querying GEDCOM gen
 The query package is part of the GEDCOM Go library:
 
 ```go
-import "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/query"
+import "github.com/lesfleursdelanuitdev/ligneous-gedcom/query"
 ```
 
 ---
@@ -59,8 +59,8 @@ package main
 
 import (
     "fmt"
-    "github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
-    "github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom/query"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/parser"
+    "github.com/lesfleursdelanuitdev/ligneous-gedcom/query"
 )
 
 func main() {
@@ -122,6 +122,18 @@ q.Filter()
 
 // Start query from family
 q.Family("@F1@")
+
+// Get all families in the tree
+families, _ := q.AllFamilies()
+
+// Get all events in the tree
+events, _ := q.AllEvents()
+
+// Get all unique places in the tree
+places, _ := q.AllPlaces()
+
+// Get all unique names in the tree
+names, _ := q.UniqueNames()
 
 // Access graph directly
 graph := q.Graph()
@@ -250,6 +262,71 @@ descendants, _ := q.Individual("@I1@").
     MaxGenerations(2).
     IncludeSelf().
     Execute()
+```
+
+---
+
+### SubtreeQuery
+
+Extract a family subtree with ancestors, descendants, siblings, and spouses.
+
+#### Options
+
+```go
+subtree, _ := q.Individual("@I1@").
+    GetSubtree().
+    AncestorGenerations(2).      // Limit ancestor generations
+    DescendantGenerations(3).     // Limit descendant generations
+    IncludeSelf().                // Include starting individual
+    IncludeSiblings().            // Include siblings
+    IncludeSpouses().            // Include spouses
+    Filter(func(indi *gedcom.IndividualRecord) bool {
+        return indi.GetSex() == "M"  // Only males
+    }).
+    Execute()
+```
+
+#### Methods
+
+- `AncestorGenerations(n)`: Limit ancestor search depth
+- `DescendantGenerations(n)`: Limit descendant search depth
+- `IncludeSelf()`: Include starting individual
+- `ExcludeSelf()`: Exclude starting individual
+- `IncludeSiblings()`: Include siblings
+- `IncludeSpouses()`: Include spouses
+- `Filter(fn)`: Apply custom filter function
+- `Execute()`: Execute query and return SubtreeResult
+- `Count()`: Return count only
+- `ExecuteRecords()`: Return records directly
+
+#### SubtreeResult
+
+```go
+type SubtreeResult struct {
+    Root        *gedcom.IndividualRecord
+    Ancestors   []*gedcom.IndividualRecord
+    Descendants []*gedcom.IndividualRecord
+    Siblings    []*gedcom.IndividualRecord
+    Spouses     []*gedcom.IndividualRecord
+    All         []*gedcom.IndividualRecord  // All individuals (deduplicated)
+}
+```
+
+#### Example
+
+```go
+subtree, _ := q.Individual("@I3@").GetSubtree().
+    AncestorGenerations(1).
+    DescendantGenerations(1).
+    IncludeSelf().
+    IncludeSiblings().
+    Execute()
+
+fmt.Printf("Root: %s\n", subtree.Root.GetName())
+fmt.Printf("Ancestors: %d\n", len(subtree.Ancestors))
+fmt.Printf("Descendants: %d\n", len(subtree.Descendants))
+fmt.Printf("Siblings: %d\n", len(subtree.Siblings))
+fmt.Printf("Total: %d\n", len(subtree.All))
 ```
 
 ---
@@ -477,6 +554,52 @@ lca, _ := q.Individuals("@I1@", "@I2@").LowestCommonAncestor()
 
 ---
 
+### Simple Collection Queries
+
+Simple queries to get all records of a specific type.
+
+#### All Families
+
+```go
+// Get all families in the tree
+families, _ := q.AllFamilies()
+for _, family := range families {
+    fmt.Printf("Family: %s\n", family.XrefID())
+}
+```
+
+#### All Events
+
+```go
+// Get all events from all individuals and families
+events, _ := q.AllEvents()
+for _, event := range events {
+    fmt.Printf("Event: %s on %s at %s\n", 
+        event.EventType, event.Date, event.Place)
+}
+```
+
+#### All Places
+
+```go
+// Get all unique places found in the tree
+places, _ := q.AllPlaces()
+for _, place := range places {
+    fmt.Printf("Place: %s\n", place)
+}
+```
+
+#### Unique Names
+
+```go
+// Get all unique names (given names and surnames)
+names, _ := q.UniqueNames()
+fmt.Printf("Given names: %v\n", names["given"])
+fmt.Printf("Surnames: %v\n", names["surname"])
+```
+
+---
+
 ### GraphMetricsQuery
 
 Graph analytics and metrics.
@@ -646,6 +769,10 @@ func (qb *QueryBuilder) Individuals(xrefIDs ...string) *MultiIndividualQuery
 func (qb *QueryBuilder) AllIndividuals() *MultiIndividualQuery
 func (qb *QueryBuilder) Filter() *FilterQuery
 func (qb *QueryBuilder) Family(xrefID string) *FamilyQuery
+func (qb *QueryBuilder) AllFamilies() ([]*gedcom.FamilyRecord, error)
+func (qb *QueryBuilder) AllEvents() ([]EventInfo, error)
+func (qb *QueryBuilder) AllPlaces() ([]string, error)
+func (qb *QueryBuilder) UniqueNames() (map[string][]string, error)
 func (qb *QueryBuilder) Graph() *Graph
 func (qb *QueryBuilder) Metrics() *GraphMetricsQuery
 ```
@@ -669,8 +796,10 @@ func (iq *IndividualQuery) Cousins(degree int) ([]*gedcom.IndividualRecord, erro
 func (iq *IndividualQuery) Nephews() ([]*gedcom.IndividualRecord, error)
 func (iq *IndividualQuery) Ancestors() *AncestorQuery
 func (iq *IndividualQuery) Descendants() *DescendantQuery
+func (iq *IndividualQuery) GetSubtree() *SubtreeQuery
 func (iq *IndividualQuery) RelationshipTo(xrefID string) *RelationshipQuery
 func (iq *IndividualQuery) PathTo(xrefID string) *PathQuery
+func (iq *IndividualQuery) GetEvents() ([]EventInfo, error)
 ```
 
 ### FilterQuery
@@ -777,6 +906,67 @@ fmt.Printf("Most connected: %s (degree: %.0f)\n", mostConnected, maxDegree)
 // Check graph connectivity
 components, _ := metrics.ConnectedComponents()
 fmt.Printf("Number of connected components: %d\n", len(components))
+```
+
+### Example 7: Get All Families
+
+```go
+families, _ := q.AllFamilies()
+fmt.Printf("Total families: %d\n", len(families))
+for _, family := range families {
+    fmt.Printf("Family: %s\n", family.XrefID())
+}
+```
+
+### Example 8: Get All Events
+
+```go
+events, _ := q.AllEvents()
+fmt.Printf("Total events: %d\n", len(events))
+for _, event := range events {
+    fmt.Printf("%s: %s at %s on %s\n", 
+        event.EventType, event.Description, event.Place, event.Date)
+}
+```
+
+### Example 9: Get All Unique Places
+
+```go
+places, _ := q.AllPlaces()
+fmt.Printf("Unique places: %d\n", len(places))
+for _, place := range places {
+    fmt.Printf("Place: %s\n", place)
+}
+```
+
+### Example 10: Get Unique Names
+
+```go
+names, _ := q.UniqueNames()
+fmt.Printf("Unique given names: %d\n", len(names["given"]))
+fmt.Printf("Unique surnames: %d\n", len(names["surname"]))
+for _, surname := range names["surname"] {
+    fmt.Printf("Surname: %s\n", surname)
+}
+```
+
+### Example 11: Subtree Extraction
+
+```go
+subtree, _ := q.Individual("@I3@").GetSubtree().
+    AncestorGenerations(2).
+    DescendantGenerations(2).
+    IncludeSelf().
+    IncludeSiblings().
+    IncludeSpouses().
+    Execute()
+
+fmt.Printf("Subtree contains %d individuals\n", len(subtree.All))
+fmt.Printf("  Root: %s\n", subtree.Root.GetName())
+fmt.Printf("  Ancestors: %d\n", len(subtree.Ancestors))
+fmt.Printf("  Descendants: %d\n", len(subtree.Descendants))
+fmt.Printf("  Siblings: %d\n", len(subtree.Siblings))
+fmt.Printf("  Spouses: %d\n", len(subtree.Spouses))
 ```
 
 ---

@@ -54,3 +54,5 @@ require (
 )
 
 replace github.com/elliotchance/gedcom/v39 => ../gedcom-elliotchance
+
+replace github.com/cacack/gedcom-go => ../gedcom-go-cacack

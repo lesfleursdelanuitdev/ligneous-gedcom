@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/lesfleursdelanuitdev/ligneous-gedcom/cmd/gedcom/internal"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/validator"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/parser"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/validator"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/types"
 	"github.com/spf13/cobra"
 )
 
@@ -85,13 +85,13 @@ func runValidateBasic(cmd *cobra.Command, args []string) error {
 		internal.PrintWarning("⚠ Found %d parsing issues\n", len(parseErrors))
 		for _, err := range parseErrors {
 			switch err.Severity {
-			case gedcom.SeveritySevere:
+			case types.SeveritySevere:
 				internal.PrintError("  ✗ [SEVERE] %s\n", err.Message)
-			case gedcom.SeverityWarning:
+			case types.SeverityWarning:
 				internal.PrintWarning("  ⚠ [WARNING] %s\n", err.Message)
-			case gedcom.SeverityInfo:
+			case types.SeverityInfo:
 				internal.PrintInfo("  ℹ [INFO] %s\n", err.Message)
-			case gedcom.SeverityHint:
+			case types.SeverityHint:
 				internal.PrintHint("  💡 [HINT] %s\n", err.Message)
 			}
 		}
@@ -100,7 +100,7 @@ func runValidateBasic(cmd *cobra.Command, args []string) error {
 	// Run basic validator
 	internal.PrintInfo("ℹ Running basic validation...\n")
 
-	errorManager := gedcom.NewErrorManager()
+	errorManager := types.NewErrorManager()
 	basicValidator := validator.NewGedcomValidator(errorManager)
 	validationErr := basicValidator.Validate(tree)
 	if validationErr != nil {
@@ -109,20 +109,20 @@ func runValidateBasic(cmd *cobra.Command, args []string) error {
 	}
 
 	// Get validation errors
-	var errors []*gedcom.GedcomError
+	var errors []*types.GedcomError
 	if errorManager != nil {
 		errors = errorManager.Errors()
 		if len(errors) > 0 {
 			internal.PrintWarning("⚠ Found %d validation issues\n", len(errors))
 			for _, err := range errors {
 				switch err.Severity {
-				case gedcom.SeveritySevere:
+				case types.SeveritySevere:
 					internal.PrintError("  ✗ [SEVERE] %s\n", err.Message)
-				case gedcom.SeverityWarning:
+				case types.SeverityWarning:
 					internal.PrintWarning("  ⚠ [WARNING] %s\n", err.Message)
-				case gedcom.SeverityInfo:
+				case types.SeverityInfo:
 					internal.PrintInfo("  ℹ [INFO] %s\n", err.Message)
-				case gedcom.SeverityHint:
+				case types.SeverityHint:
 					internal.PrintHint("  💡 [HINT] %s\n", err.Message)
 				}
 			}
@@ -179,7 +179,7 @@ func runValidateAdvanced(cmd *cobra.Command, args []string) error {
 	internal.PrintInfo("ℹ Running advanced validation...\n")
 	internal.PrintInfo("  Severity threshold: %s\n", severityStr)
 
-	errorManager := gedcom.NewErrorManager()
+	errorManager := types.NewErrorManager()
 	basicValidator := validator.NewGedcomValidator(errorManager)
 	basicValidator.EnableAdvancedValidation()
 	validationErr := basicValidator.Validate(tree)
@@ -198,13 +198,13 @@ func runValidateAdvanced(cmd *cobra.Command, args []string) error {
 			internal.PrintWarning("⚠ Found %d validation issues (severity >= %s)\n", len(filteredErrors), severityStr)
 			for _, err := range filteredErrors {
 				switch err.Severity {
-				case gedcom.SeveritySevere:
+				case types.SeveritySevere:
 					internal.PrintError("  ✗ [SEVERE] %s\n", err.Message)
-				case gedcom.SeverityWarning:
+				case types.SeverityWarning:
 					internal.PrintWarning("  ⚠ [WARNING] %s\n", err.Message)
-				case gedcom.SeverityInfo:
+				case types.SeverityInfo:
 					internal.PrintInfo("  ℹ [INFO] %s\n", err.Message)
-				case gedcom.SeverityHint:
+				case types.SeverityHint:
 					internal.PrintHint("  💡 [HINT] %s\n", err.Message)
 				}
 			}
@@ -227,35 +227,35 @@ func runValidateAdvanced(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func filterErrorsBySeverity(errors []*gedcom.GedcomError, minSeverity string) []*gedcom.GedcomError {
-	severityOrder := map[gedcom.ErrorSeverity]int{
-		gedcom.SeverityHint:    0,
-		gedcom.SeverityInfo:    1,
-		gedcom.SeverityWarning: 2,
-		gedcom.SeveritySevere:  3,
+func filterErrorsBySeverity(errors []*types.GedcomError, minSeverity string) []*types.GedcomError {
+	severityOrder := map[types.ErrorSeverity]int{
+		types.SeverityHint:    0,
+		types.SeverityInfo:    1,
+		types.SeverityWarning: 2,
+		types.SeveritySevere:  3,
 	}
 
 	// Convert string to ErrorSeverity
-	var minSeverityEnum gedcom.ErrorSeverity
+	var minSeverityEnum types.ErrorSeverity
 	switch minSeverity {
 	case "hint":
-		minSeverityEnum = gedcom.SeverityHint
+		minSeverityEnum = types.SeverityHint
 	case "info":
-		minSeverityEnum = gedcom.SeverityInfo
+		minSeverityEnum = types.SeverityInfo
 	case "warning":
-		minSeverityEnum = gedcom.SeverityWarning
+		minSeverityEnum = types.SeverityWarning
 	case "severe":
-		minSeverityEnum = gedcom.SeveritySevere
+		minSeverityEnum = types.SeveritySevere
 	default:
-		minSeverityEnum = gedcom.SeverityWarning
+		minSeverityEnum = types.SeverityWarning
 	}
 
 	minLevel, ok := severityOrder[minSeverityEnum]
 	if !ok {
-		minLevel = severityOrder[gedcom.SeverityWarning]
+		minLevel = severityOrder[types.SeverityWarning]
 	}
 
-	filtered := make([]*gedcom.GedcomError, 0)
+	filtered := make([]*types.GedcomError, 0)
 	for _, err := range errors {
 		if level, ok := severityOrder[err.Severity]; ok && level >= minLevel {
 			filtered = append(filtered, err)
@@ -265,7 +265,7 @@ func filterErrorsBySeverity(errors []*gedcom.GedcomError, minSeverity string) []
 	return filtered
 }
 
-func exportValidationReport(errors []*gedcom.GedcomError, outputFile string, format string) error {
+func exportValidationReport(errors []*types.GedcomError, outputFile string, format string) error {
 	// Simple JSON export for now
 	if format == "json" {
 		data := map[string]interface{}{

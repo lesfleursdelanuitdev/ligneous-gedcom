@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/lesfleursdelanuitdev/ligneous-gedcom/cmd/gedcom/internal"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/exporter"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
-	"github.com/lesfleursdelanuitdev/ligneous-gedcom/pkg/gedcom"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/exporter"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/parser"
+	"github.com/lesfleursdelanuitdev/ligneous-gedcom/types"
 	"github.com/spf13/cobra"
 )
 
@@ -135,7 +135,7 @@ func runExport(cmd *cobra.Command, args []string, format string) error {
 	// Export
 	internal.PrintInfo("ℹ Exporting to %s: %s\n", format, outputFile)
 
-	errorManager := gedcom.NewErrorManager()
+	errorManager := types.NewErrorManager()
 
 	switch format {
 	case "json":
