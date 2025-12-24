@@ -10,11 +10,7 @@ import (
 	"github.com/lesfleursdelanuitdev/ligneous-gedcom/internal/parser"
 )
 
-// fileExists checks if a file exists
-func fileExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
-}
+// fileExists is defined in helpers.go
 
 // TestInternalParserComparison compares all internal parsers
 func TestInternalParserComparison(t *testing.T) {

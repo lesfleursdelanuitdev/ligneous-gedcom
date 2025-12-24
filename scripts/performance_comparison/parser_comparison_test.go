@@ -263,8 +263,4 @@ func benchmarkUserParser(filePath string, t *testing.T) (time.Duration, uint64, 
 	return avgTime, 0, 0 // Can't easily get allocs without testing.B
 }
 
-// fileExists checks if a file exists
-func fileExists(path string) bool {
-	_, err := os.Stat(path)
-	return !os.IsNotExist(err)
-}
+// fileExists is defined in helpers.go
