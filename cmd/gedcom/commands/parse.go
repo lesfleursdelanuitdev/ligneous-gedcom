@@ -91,11 +91,14 @@ func runParseFile(cmd *cobra.Command, args []string) error {
 		parserType = config.Parser.Type
 	}
 
-	// Create parser (for now, only hierarchical is available)
-	// Parallel and streaming parsers will be added later
+	// Create parser
+	// Note: HierarchicalParser automatically enables parallel processing for files >= 32KB
+	// For streaming, use StreamingHierarchicalParser explicitly
 	p := parser.NewHierarchicalParser()
-	if parserType != "hierarchical" {
-		internal.PrintInfo("  Note: %s parser not yet implemented, using hierarchical\n", parserType)
+	if parserType == "stream" {
+		internal.PrintInfo("  Note: Streaming parser available via StreamingHierarchicalParser, using hierarchical with auto-parallel\n")
+	} else if parserType == "parallel" {
+		internal.PrintInfo("  Note: Parallel processing is automatically enabled in HierarchicalParser for files >= 32KB\n")
 	}
 
 	// Show progress
