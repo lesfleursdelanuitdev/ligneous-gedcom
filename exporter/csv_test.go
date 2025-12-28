@@ -11,8 +11,13 @@ import (
 
 func TestCSVExporter_ExportToFile(t *testing.T) {
 	// Parse a test file
+	testFile := findTestDataFile("royal92.ged")
+	if testFile == "" {
+		t.Skipf("Test file not found (tried royal92.ged)")
+	}
+
 	p := parser.NewHierarchicalParser()
-	tree, err := p.Parse("../../testdata/royal92.ged")
+	tree, err := p.Parse(testFile)
 	if err != nil {
 		t.Fatalf("Failed to parse test file: %v", err)
 	}
@@ -64,8 +69,13 @@ func TestCSVExporter_ExportToFile(t *testing.T) {
 
 func TestCSVExporter_ExportToString(t *testing.T) {
 	// Parse a test file
+	testFile := findTestDataFile("royal92.ged")
+	if testFile == "" {
+		t.Skipf("Test file not found (tried royal92.ged)")
+	}
+
 	p := parser.NewHierarchicalParser()
-	tree, err := p.Parse("../../testdata/royal92.ged")
+	tree, err := p.Parse(testFile)
 	if err != nil {
 		t.Fatalf("Failed to parse test file: %v", err)
 	}

@@ -171,3 +171,4 @@ func GetDiffCommand() *cobra.Command {
 	return diffCmd
 }
 
+

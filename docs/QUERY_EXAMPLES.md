@@ -231,3 +231,4 @@ results, _ := query.Filter().
 - Name filters are case-insensitive by default
 - Analytics methods (most common names) return results sorted by count (descending)
 
+

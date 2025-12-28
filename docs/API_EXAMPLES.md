@@ -555,3 +555,4 @@ fmt.Printf("Graph build time: %v\n", snapshot.GraphBuildTime)
 **Issue**: High memory usage
 - **Solution**: Reduce cache sizes, use hybrid storage, enable lazy loading
 
+
