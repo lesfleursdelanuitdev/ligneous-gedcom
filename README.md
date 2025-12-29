@@ -1,14 +1,23 @@
-# ligneous-gedcom (GEDCOM Go)
+# ligneous-gedcom
 
 [![Go Version](https://img.shields.io/badge/go-1.23+-00ADD8?style=flat-square&logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/lesfleursdelanuitdev/ligneous-gedcom)](https://goreportcard.com/report/github.com/lesfleursdelanuitdev/ligneous-gedcom)
 
-**ligneous-gedcom** (also known as **GEDCOM Go**) is a research-grade genealogy toolkit for people who want to understand, validate, and explore family history at scale — from a single family tree to entire communities.
+**ligneous-gedcom** is a genealogy toolkit designed to facilitate easily discovering information from GEDCOM data. It provides a faster and more modern parser and validator implementation, helping you find relationships, detect duplicates, understand data quality, and export meaningful subsets.
 
-It helps you find relationships, detect duplicates, understand data quality, and export meaningful subsets — without hiding complexity or making unsafe assumptions. Whether you're researching your own family (50 to at most 50K individuals) or studying whole populations (500K–5M individuals), this tool provides the precision and safety that serious genealogical research requires.
+Built with Go for performance and reliability, supporting the full GEDCOM 5.5.1 specification.
 
-**Stable for Serious Genealogical Research** — Built with Go for performance and reliability, supporting the full GEDCOM 5.5.1 specification.
+## Package Overview
+
+ligneous-gedcom provides a comprehensive set of packages for working with GEDCOM data:
+
+- **Parser & Validator**: Parses and validates GEDCOM files against the GEDCOM 5.5.1 specification, ensuring data integrity and compliance
+- **Query Package**: Perform powerful queries on your dataset, including relationship queries (ancestors, descendants, siblings, spouses), path finding, and filtered searches
+- **CLI Package**: Interactive command line interface that provides easy access to the query package and other functionality through an intuitive terminal-based interface
+- **Duplicate Package**: Detect potential duplicate individuals using similarity scoring, phonetic matching, and relationship analysis
+- **Diff Package**: Compare two GEDCOM files and identify semantic differences with change tracking
+- **Exporter Package**: Export your GEDCOM data to multiple formats including JSON, XML, YAML, CSV, and GEDCOM for integration with other systems
 
 ## Quick Start
 
@@ -52,7 +61,7 @@ gedcom search family.ged --name "John" --sex M --birth-year 1900-1950
 gedcom export --descendants @I123@ --depth 8 -o branch.json
 ```
 
-> **📖 Next Steps:** Read the [User Workflows](#user-workflows) section to understand how the tool behaves differently depending on your dataset size (50–50K vs 500K–5M individuals).
+> **📖 Next Steps:** Read the [User Workflows](#user-workflows) section to see example workflows for typical family research scenarios.
 
 ## What This Tool Does
 
@@ -172,8 +181,8 @@ gedcom duplicates family.ged --individual @I123@ --top 20 --explain
 # Find duplicates in a specific time period and place
 gedcom duplicates family.ged --place "Guyana" --year 1850-1920 --top 200
 
-# For large datasets, scope by surname and time period
-gedcom duplicates population.ged --surname "Singh" --year 1880-1920 --top 200
+# Scope by surname and time period for more focused results
+gedcom duplicates family.ged --surname "Smith" --year 1880-1920 --top 200
 ```
 
 ### Advanced Search
@@ -388,8 +397,7 @@ gedcom> exit
 
 ## User Workflows
 
-> **📖 Important:** This section explains how to use ligneous-gedcom effectively for your research goals.  
-> The tool behaves differently depending on your dataset size — read the section that matches your situation.
+> **📖 Important:** This section explains how to use ligneous-gedcom effectively for your family research goals.
 
 ### For Private Family Researchers (50 to at most 50K individuals)
 
@@ -423,59 +431,6 @@ gedcom interactive family.ged
 gedcom export --descendants @I123@ --depth 8 -o branch.json
 ```
 
-### For Community/Population Researchers (500K–5M individuals)
-
-**Your typical scenario:** Whole populations (tribes, villages, congregations, diaspora groups) with many repetitive names.
-
-**What to expect:**
-- Duplicate detection takes **10-20 minutes for full datasets** (but you should scope it!)
-- The tool will **warn you** when names are too repetitive for broad matching
-- **Scoped operations** (by place, time period, surname) are essential
-- Data quality reports help you understand your dataset first
-
-**Critical guidance:**
-- **Never run duplicate detection on the entire dataset without scoping**
-- Always start with a data quality report to understand your data
-- Use place, time period, or surname filters to narrow the scope
-- The tool will warn you when blocks are too large and suggest alternatives
-
-**Example workflows:**
-
-```bash
-# Find duplicates for a specific surname in a time period
-gedcom duplicates population.ged --surname "Singh" --year 1880-1920 --top 200
-
-# Find duplicates in a specific region
-gedcom duplicates population.ged --place "Uttarakhand" --year 1750-1900 --top 200
-
-# Export by surname and place
-gedcom export --surname "Bisht" --place "Uttarakhand" --year 1750-1900 -o bisht_family.json
-
-# Export a disconnected component (family cluster)
-gedcom export --component 3 -o cluster3.json
-```
-
-**Understanding warnings:**
-
-If you see:
-```
-⚠️ WARNING: Duplicate detection could not evaluate 500,000 records (50.0%) 
-because the dataset has extremely common surnames/years (largest block: 150,000 people). 
-Try adding a place filter, widening given-name prefix matching, or running per-region.
-```
-
-This means:
-- Your dataset has very repetitive names (e.g., everyone named "Singh" born in 1900)
-- The tool skipped those blocks to avoid performance issues
-- **Solution:** Add filters (place, time period, given name) to narrow the scope
-
-**Performance expectations:**
-- Scoped duplicate detection: **1-5 minutes** (with place/time filters)
-- Full dataset duplicate detection: **10-20 minutes** (but you should scope it!)
-- Graph queries: Still fast (**< 1 second**)
-- Export: Minutes for large subsets
-
-> **Key insight:** Always scope your duplicate detection. The tool is optimized, but 5M records is still 5M records. Use filters.
 
 ## Technical Details
 
@@ -484,7 +439,7 @@ This means:
 **Package Structure:**
 
 ```
-gedcom-go/
+ligneous-gedcom/
 ├── types/               # Core GEDCOM types and data structures
 │   ├── Tree, Record, Line, Error
 │   ├── Individual, Family, Note, etc.
@@ -532,90 +487,17 @@ gedcom-go/
 
 ### What This Means in Practice
 
-**For most family trees (50 to at most 50K individuals):**
+**For typical family research (hundreds to tens of thousands of individuals):**
 - Searches and relationship queries are **instant** (< 1 second)
-- Duplicate detection usually completes in **minutes** when scoped
+- Duplicate detection usually completes in **minutes**
 - Interactive exploration feels natural and responsive
-
-**For large population datasets (500K–5M individuals):**
-- Scoped operations (with filters) complete in **1-5 minutes**
-- Full dataset operations may require **10-20 minutes** and high-memory machines
-- Always scope duplicate detection by place, time period, or surname for best results
+- Most operations complete in seconds
 
 **Memory requirements:**
-- Small trees (10K): ~150 MB
-- Medium trees (200K): ~3 GB
-- Large datasets (1.5M): ~21 GB peak
-- Very large datasets (5M): ~70-75 GB (parsing validated; full in-memory graph construction validated up to 1.5-2M on typical hardware)
-
-### Real-World Performance (1.5M Individuals)
-
-ligneous-gedcom has been stress-tested with **1.5 million individuals** (375,000 families). Here are the results:
-
-**Overall Performance:**
-- **Total Duration:** ~105 seconds (1 minute 45 seconds) for complete workflow
-- **Memory Usage:** ~21.5 GB peak (efficient for dataset size)
-- **Status:** ✅ All tests passed
-
-**Breakdown by Phase:**
-
-1. **Data Generation:** 5.15s (290,981 individuals/sec)
-2. **File Generation:** 29.52s (50,809 ops/sec)
-3. **Parsing:** 7.36s (203,680 individuals/sec) - Excellent performance
-4. **Graph Construction:** 47.72s (31,436 ops/sec) - 1.5M nodes, 4.8M edges
-5. **Query Operations:**
-   - Filter queries: 1.2s - 6.7s for 1.5M individuals
-   - Cached relationship queries: **< 12µs** (sub-microsecond!)
-   - Path finding: 8.5µs - 43µs
-6. **Concurrent Operations:** 3.02s (495,899 ops/sec) - Thread-safe
-7. **Duplicate Detection (with blocking):** ~8-9 seconds for 1.5M individuals
-   - Uses blocking strategy to reduce from O(n²) to O(n × avg_block_size)
-   - **Without blocking:** Would require ~1.125 trillion comparisons (computationally infeasible)
-   - **With blocking:** Completes in ~9 seconds, generates candidates efficiently
-   - For synthetic test data: 0 comparisons (expected - few true duplicates in test data)
-   - With real duplicate data: Would generate ~300M comparisons in minutes (vs impossible without blocking)
-8. **Graph Metrics:** 938ms (1.6M ops/sec)
-
-**Key Highlights:**
-- ✅ Parsed 1.5M individuals in under 8 seconds
-- ✅ Cached queries remain sub-microsecond even at 1.5M scale
-- ✅ Linear scaling from 1M to 1.5M (1.5x data, ~1.4x time)
-- ✅ No performance degradation observed
-- ✅ Duplicate detection optimized from O(n²) to O(n) with blocking
+- Small family trees (hundreds to thousands): ~50-150 MB
+- Medium family trees (10K-50K individuals): ~150 MB - 3 GB
 
 ### Reproducing the Benchmarks
-
-**Run the comprehensive stress test:**
-
-```bash
-# Test with 1.5 million individuals (takes ~2 minutes)
-# Note: stress_test.go is in the root package, so run from project root
-go test -v -run TestStress_1_5M_Comprehensive -timeout 30m
-
-# Test with 1 million individuals
-go test -v -run TestStress_1M_Comprehensive -timeout 30m
-
-# Test with 100K individuals (quick test)
-go test -v -run TestStress_100K_Comprehensive -timeout 10m
-
-# Test with 5 million individuals (requires ~70-75 GB RAM, may take 10-20 minutes)
-go test -v -run TestStress_5M_Comprehensive -timeout 30m
-```
-
-**Run individual performance tests:**
-
-```bash
-# Query performance tests
-go test -v -run TestPerformance_100K ./query/...
-go test -v -run TestPerformance_500K ./query/...
-
-# Parser performance tests
-go test -v -run TestPerformance_Parse_100K ./parser/...
-go test -v -run TestPerformance_Parse_500K ./parser/...
-
-# Duplicate detection performance tests
-go test -v -run TestPerformance_DuplicateDetection_100K ./duplicate/...
-```
 
 **Run benchmarks:**
 
@@ -623,26 +505,18 @@ go test -v -run TestPerformance_DuplicateDetection_100K ./duplicate/...
 # All benchmarks
 go test -bench=. -benchmem ./...
 
-# Specific benchmarks
-go test -bench=BenchmarkGraphConstruction_100K -benchmem ./pkg/gedcom/query/...
-go test -bench=BenchmarkFilterQuery_500K -benchmem ./pkg/gedcom/query/...
+# Run tests with your own GEDCOM files
+go test ./...
 ```
-
-**Note:** 
-- The stress tests generate synthetic data in-memory with realistic family structures
-- Tests include: data generation, file I/O, parsing, graph construction, query operations, concurrent operations, duplicate detection (with blocking), and graph metrics
-- For real-world testing, use your own GEDCOM files with the same commands
-- **Detailed results:** See [STRESS_TEST_RESULTS_1_5M.md](STRESS_TEST_RESULTS_1_5M.md) for complete analysis
-- **Duplicate detection details:** See [DUPLICATE_DETECTION_1_5M_RESULTS.md](DUPLICATE_DETECTION_1_5M_RESULTS.md) for blocking performance
 
 ### Performance Characteristics
 
 **Scaling Behavior:**
-- **Parsing:** ~50,000-100,000 individuals/second (linear scaling, validated up to 5M)
-- **Graph Construction:** ~10,000-20,000 individuals/second (linear scaling, validated up to 1.5-2M on typical hardware)
+- **Parsing:** ~50,000-100,000 individuals/second
+- **Graph Construction:** ~10,000-20,000 individuals/second
 - **Query Performance:** Sub-millisecond for most queries (constant time with caching)
-- **Memory:** ~14-15 MB per 1,000 individuals (validated up to 1.5M; 5M requires ~70-75 GB)
-- **Duplicate Detection:** O(n²) → O(n) with blocking; ~8 seconds for 1.5M individuals
+- **Memory:** ~14-15 MB per 1,000 individuals
+- **Duplicate Detection:** Optimized with blocking strategy for efficient processing
 
 ### Optimizations
 
@@ -661,11 +535,7 @@ go test -bench=BenchmarkFilterQuery_500K -benchmem ./pkg/gedcom/query/...
 - Cached queries: ~45ns (cache hit)
 - Indexed filtering: O(1) or O(log n) instead of O(V)
 - Shortest path: O(V/2 + E/2) average case
-
-**Large Scale (1.5M individuals):**
-- See "Real-World Performance" section above for complete results
-- All operations scale linearly with dataset size
-- No performance degradation at scale
+- All operations scale efficiently with dataset size
 
 ## Documentation
 
@@ -686,25 +556,43 @@ go test -bench=BenchmarkFilterQuery_500K -benchmem ./pkg/gedcom/query/...
 
 ## Testing
 
+The codebase has been thoroughly tested with multiple real GEDCOM files of varying sizes from the `testdata` folder:
+
+**Real GEDCOM Test Files:**
+- **xavier.ged** (smallest): 317 individuals, 107 families, 5,821 lines
+- **gracis.ged**: 585 individuals, 180 families, 10,323 lines
+- **tree1.ged**: 1,032 individuals, 310 families, 12,713 lines
+- **royal92.ged**: 3,010 individuals, 1,422 families, 30,682 lines
+- **pres2020.ged** (largest): 2,322 individuals, 1,115 families, 49,431 lines
+
+**Stress Testing:**
+- Comprehensive stress testing with synthetic test data to validate performance and correctness
+- Memory and performance characteristics verified across typical dataset sizes
+
 ```bash
 # Run all tests
-go test ./...
+go test ./... -timeout 10m
 
 # Run tests with coverage
-go test ./... -cover
+go test ./... -cover -timeout 10m
 
 # Run benchmarks
-go test ./... -bench=.
+go test ./... -bench=. -timeout 10m
 ```
 
 **Test Coverage:**
-- ✅ Parser: Comprehensive (15+ test files)
-- ✅ Validator: Comprehensive (10+ test files)
-- ✅ Exporter: Comprehensive (8+ test files)
-- ✅ Query API: Comprehensive (15+ test files)
-- ✅ Core Types: Comprehensive (10+ test files)
-- ✅ Duplicate Detection: Comprehensive (similarity, phonetic, relationships, parallel processing)
-- ✅ GEDCOM Diff: Comprehensive (XREF matching, field comparison, change history)
+
+The core codebase maintains **83.4% test coverage** across all essential packages (excluding CLI and scripts). Test coverage applies to all core functionality:
+
+- ✅ **Parser** (`parser/`): Comprehensive coverage with 15+ test files covering all parser types, edge cases, and malformed input handling
+- ✅ **Validator** (`validator/`): Comprehensive coverage with 10+ test files covering all validation rules and severity levels
+- ✅ **Exporter** (`exporter/`): Comprehensive coverage with 8+ test files covering all export formats (JSON, XML, YAML, CSV, GEDCOM)
+- ✅ **Query API** (`query/`): Comprehensive coverage with 15+ test files covering graph operations, relationship queries, filtering, and hybrid storage modes
+- ✅ **Core Types** (`types/`): Comprehensive coverage with 10+ test files covering all GEDCOM data structures and type conversions
+- ✅ **Duplicate Detection** (`duplicate/`): Comprehensive coverage including similarity scoring, phonetic matching, relationship analysis, blocking strategies, and parallel processing
+- ✅ **GEDCOM Diff** (`diff/`): Comprehensive coverage including XREF matching, field comparison, content comparison, and change history tracking
+
+All core packages (`query`, `parser`, `types`, `duplicate`, `diff`, `exporter`, `validator`) are thoroughly tested with unit tests, integration tests, and performance benchmarks.
 
 ## Requirements
 
@@ -732,9 +620,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Status
 
-✅ **Stable for Serious Genealogical Research**
+✅ **Production Ready**
 
-The codebase is mature, well-tested, and ready for real-world use. All core functionality is implemented and tested. The tool has been validated on datasets ranging from small family trees (10K individuals) to large population studies (5M individuals).
+The codebase is mature, well-tested, and ready for real-world use. All core functionality is implemented and tested. The tool has been validated on datasets ranging from small family trees (hundreds of individuals) to extended family research (tens of thousands of individuals).
 
 ---
 
