@@ -565,8 +565,7 @@ The codebase has been thoroughly tested with multiple real GEDCOM files of varyi
 - **royal92.ged**: 3,010 individuals, 1,422 families, 30,682 lines
 - **pres2020.ged** (largest): 2,322 individuals, 1,115 families, 49,431 lines
 
-**Stress Testing:**
-- Comprehensive stress testing with synthetic test data to validate performance and correctness
+**Testing:**
 - Memory and performance characteristics verified across typical dataset sizes
 
 ```bash
