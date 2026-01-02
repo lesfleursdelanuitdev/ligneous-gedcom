@@ -160,49 +160,61 @@ func (g *Graph) RemoveEdgeIncremental(edgeID string) error {
 	toNode := edge.To
 	edgeType := edge.EdgeType
 
-	// Remove the edge
-	if err := g.removeEdgeInternal(edgeID); err != nil {
-		return err
-	}
-
-	// For family relationship edges, also remove the reverse edge
+	// For family relationship edges, find and collect reverse edges BEFORE removing the main edge
+	// This ensures we can find them in the indexed lists before they're removed
+	var reverseEdgesToRemove []string
 	switch edgeType {
 	case EdgeTypeHUSB:
-		// Remove corresponding FAMS edge
+		// Find corresponding FAMS edge
 		if indiNode, ok := toNode.(*IndividualNode); ok {
 			if famNode, ok := fromNode.(*FamilyNode); ok {
-				reverseEdgeID := fmt.Sprintf("%s_FAMS_%s", indiNode.ID(), famNode.ID())
-				if reverseEdge := g.edges[reverseEdgeID]; reverseEdge != nil {
-					g.removeEdgeInternal(reverseEdgeID)
+				// Look in indexed famsEdges list
+				for _, e := range indiNode.famsEdges {
+					if e.EdgeType == EdgeTypeFAMS && e.To == famNode {
+						reverseEdgesToRemove = append(reverseEdgesToRemove, e.ID)
+					}
 				}
 			}
 		}
 	case EdgeTypeWIFE:
-		// Remove corresponding FAMS edge
+		// Find corresponding FAMS edge
 		if indiNode, ok := toNode.(*IndividualNode); ok {
 			if famNode, ok := fromNode.(*FamilyNode); ok {
-				reverseEdgeID := fmt.Sprintf("%s_FAMS_%s", indiNode.ID(), famNode.ID())
-				if reverseEdge := g.edges[reverseEdgeID]; reverseEdge != nil {
-					g.removeEdgeInternal(reverseEdgeID)
+				// Look in indexed famsEdges list
+				for _, e := range indiNode.famsEdges {
+					if e.EdgeType == EdgeTypeFAMS && e.To == famNode {
+						reverseEdgesToRemove = append(reverseEdgesToRemove, e.ID)
+					}
 				}
 			}
 		}
 	case EdgeTypeCHIL:
-		// Remove corresponding FAMC edge (may have index suffix)
+		// Find corresponding FAMC edge (may have index suffix)
 		if indiNode, ok := toNode.(*IndividualNode); ok {
 			if famNode, ok := fromNode.(*FamilyNode); ok {
-				// Find FAMC edge (may have index suffix like _0, _1, etc.)
-				edgesToRemove := make([]string, 0)
-				for eID, e := range g.edges {
-					if e.EdgeType == EdgeTypeFAMC && e.From == indiNode && e.To == famNode {
-						edgesToRemove = append(edgesToRemove, eID)
+				// Find FAMC edge using the indexed famcEdges list (more reliable than iterating g.edges)
+				// Compare by Family reference since getParentsFromEdges uses edge.Family
+				for _, e := range indiNode.famcEdges {
+					if e.EdgeType == EdgeTypeFAMC && e.Family == famNode {
+						reverseEdgesToRemove = append(reverseEdgesToRemove, e.ID)
 					}
-				}
-				for _, eID := range edgesToRemove {
-					g.removeEdgeInternal(eID)
 				}
 			}
 		}
+	}
+
+	// Remove the main edge
+	if err := g.removeEdgeInternal(edgeID); err != nil {
+		return err
+	}
+
+	// Remove reverse edges
+	for _, eID := range reverseEdgesToRemove {
+		g.removeEdgeInternal(eID)
+	}
+
+	// Handle remaining edge types that need reverse edge removal
+	switch edgeType {
 	case EdgeTypeFAMS:
 		// Remove corresponding HUSB or WIFE edge
 		if indiNode, ok := fromNode.(*IndividualNode); ok {
@@ -224,11 +236,13 @@ func (g *Graph) RemoveEdgeIncremental(edgeID string) error {
 		// Remove corresponding CHIL edge
 		if indiNode, ok := fromNode.(*IndividualNode); ok {
 			if famNode, ok := toNode.(*FamilyNode); ok {
-				// Find CHIL edge (may have index suffix)
+				// Find CHIL edge using the indexed chilEdges list (more reliable than iterating g.edges)
+				// Compare by ID to avoid pointer comparison issues
+				indiNodeID := indiNode.ID()
 				edgesToRemove := make([]string, 0)
-				for eID, e := range g.edges {
-					if e.EdgeType == EdgeTypeCHIL && e.From == famNode && e.To == indiNode {
-						edgesToRemove = append(edgesToRemove, eID)
+				for _, e := range famNode.chilEdges {
+					if e.EdgeType == EdgeTypeCHIL && e.To != nil && e.To.ID() == indiNodeID {
+						edgesToRemove = append(edgesToRemove, e.ID)
 					}
 				}
 				for _, eID := range edgesToRemove {
@@ -355,6 +369,60 @@ func (g *Graph) removeEdgeInternal(edgeID string) error {
 	toXref := edge.To.ID()
 	fromID := g.getID(fromXref)
 	toID := g.getID(toXref)
+
+	// Remove from indexed edge lists based on edge type
+	switch edge.EdgeType {
+	case EdgeTypeCHIL:
+		// Remove from family's chilEdges
+		if famNode, ok := edge.From.(*FamilyNode); ok {
+			for i, e := range famNode.chilEdges {
+				if e.ID == edgeID {
+					// Remove by swapping with last element
+					famNode.chilEdges[i] = famNode.chilEdges[len(famNode.chilEdges)-1]
+					famNode.chilEdges = famNode.chilEdges[:len(famNode.chilEdges)-1]
+					break
+				}
+			}
+		}
+	case EdgeTypeFAMC:
+		// Remove from individual's famcEdges
+		if indiNode, ok := edge.From.(*IndividualNode); ok {
+			for i, e := range indiNode.famcEdges {
+				if e.ID == edgeID {
+					// Remove by swapping with last element
+					indiNode.famcEdges[i] = indiNode.famcEdges[len(indiNode.famcEdges)-1]
+					indiNode.famcEdges = indiNode.famcEdges[:len(indiNode.famcEdges)-1]
+					break
+				}
+			}
+		}
+	case EdgeTypeFAMS:
+		// Remove from individual's famsEdges
+		if indiNode, ok := edge.From.(*IndividualNode); ok {
+			for i, e := range indiNode.famsEdges {
+				if e.ID == edgeID {
+					// Remove by swapping with last element
+					indiNode.famsEdges[i] = indiNode.famsEdges[len(indiNode.famsEdges)-1]
+					indiNode.famsEdges = indiNode.famsEdges[:len(indiNode.famsEdges)-1]
+					break
+				}
+			}
+		}
+	case EdgeTypeHUSB:
+		// Clear husbandEdge if this is the indexed edge
+		if famNode, ok := edge.From.(*FamilyNode); ok {
+			if famNode.husbandEdge != nil && famNode.husbandEdge.ID == edgeID {
+				famNode.husbandEdge = nil
+			}
+		}
+	case EdgeTypeWIFE:
+		// Clear wifeEdge if this is the indexed edge
+		if famNode, ok := edge.From.(*FamilyNode); ok {
+			if famNode.wifeEdge != nil && famNode.wifeEdge.ID == edgeID {
+				famNode.wifeEdge = nil
+			}
+		}
+	}
 
 	// Remove from edge index (using uint32 IDs)
 	if fromID != 0 {
