@@ -105,10 +105,16 @@ func (g *Graph) AddEdgeIncremental(edge *Edge) error {
 		// Family --[HUSB]--> Individual, also create Individual --[FAMS]--> Family
 		if famNode, ok := edge.From.(*FamilyNode); ok {
 			if indiNode, ok := edge.To.(*IndividualNode); ok {
+				// Index the HUSB edge for fast access
+				famNode.husbandEdge = edge
+				
 				edgeID2 := fmt.Sprintf("%s_FAMS_%s", indiNode.ID(), famNode.ID())
 				edge2 := NewEdgeWithFamily(edgeID2, indiNode, famNode, EdgeTypeFAMS, famNode)
 				if err := g.addEdgeInternal(edge2); err != nil {
 					// If reverse edge already exists, that's okay
+				} else {
+					// Index the FAMS edge for fast access
+					indiNode.famsEdges = append(indiNode.famsEdges, edge2)
 				}
 			}
 		}
@@ -116,10 +122,16 @@ func (g *Graph) AddEdgeIncremental(edge *Edge) error {
 		// Family --[WIFE]--> Individual, also create Individual --[FAMS]--> Family
 		if famNode, ok := edge.From.(*FamilyNode); ok {
 			if indiNode, ok := edge.To.(*IndividualNode); ok {
+				// Index the WIFE edge for fast access
+				famNode.wifeEdge = edge
+				
 				edgeID2 := fmt.Sprintf("%s_FAMS_%s", indiNode.ID(), famNode.ID())
 				edge2 := NewEdgeWithFamily(edgeID2, indiNode, famNode, EdgeTypeFAMS, famNode)
 				if err := g.addEdgeInternal(edge2); err != nil {
 					// If reverse edge already exists, that's okay
+				} else {
+					// Index the FAMS edge for fast access
+					indiNode.famsEdges = append(indiNode.famsEdges, edge2)
 				}
 			}
 		}
@@ -127,10 +139,16 @@ func (g *Graph) AddEdgeIncremental(edge *Edge) error {
 		// Family --[CHIL]--> Individual, also create Individual --[FAMC]--> Family
 		if famNode, ok := edge.From.(*FamilyNode); ok {
 			if indiNode, ok := edge.To.(*IndividualNode); ok {
+				// Index the CHIL edge for fast access
+				famNode.chilEdges = append(famNode.chilEdges, edge)
+				
 				edgeID2 := fmt.Sprintf("%s_FAMC_%s", indiNode.ID(), famNode.ID())
 				edge2 := NewEdgeWithFamily(edgeID2, indiNode, famNode, EdgeTypeFAMC, famNode)
 				if err := g.addEdgeInternal(edge2); err != nil {
 					// If reverse edge already exists, that's okay
+				} else {
+					// Index the FAMC edge for fast access
+					indiNode.famcEdges = append(indiNode.famcEdges, edge2)
 				}
 			}
 		}
@@ -193,10 +211,21 @@ func (g *Graph) RemoveEdgeIncremental(edgeID string) error {
 		if indiNode, ok := toNode.(*IndividualNode); ok {
 			if famNode, ok := fromNode.(*FamilyNode); ok {
 				// Find FAMC edge using the indexed famcEdges list (more reliable than iterating g.edges)
-				// Compare by Family reference since getParentsFromEdges uses edge.Family
+				// Compare by Family ID to handle cases where pointer comparison might fail
+				famNodeID := famNode.ID()
+				foundInIndex := false
 				for _, e := range indiNode.famcEdges {
-					if e.EdgeType == EdgeTypeFAMC && e.Family == famNode {
+					if e.EdgeType == EdgeTypeFAMC && e.Family != nil && e.Family.ID() == famNodeID {
 						reverseEdgesToRemove = append(reverseEdgesToRemove, e.ID)
+						foundInIndex = true
+					}
+				}
+				// Fallback: if not found in indexed list, search in g.edges (shouldn't happen but safety check)
+				if !foundInIndex {
+					for eID, e := range g.edges {
+						if e.EdgeType == EdgeTypeFAMC && e.From == indiNode && e.To == famNode {
+							reverseEdgesToRemove = append(reverseEdgesToRemove, eID)
+						}
 					}
 				}
 			}
