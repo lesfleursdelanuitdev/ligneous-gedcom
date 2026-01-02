@@ -2,9 +2,7 @@ package query
 
 import (
 	"fmt"
-	"os"
 	"runtime"
-	"testing"
 	"time"
 
 	"github.com/lesfleursdelanuitdev/ligneous-gedcom/types"
