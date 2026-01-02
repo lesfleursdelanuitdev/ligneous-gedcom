@@ -1,6 +1,7 @@
 package query
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -101,7 +102,8 @@ func BenchmarkHybridQueryComparison(b *testing.B) {
 
 	// Build PostgreSQL graph
 	badgerPathPostgres := filepath.Join(tmpDir, "postgres_graph")
-	fileID := "bench_query_file"
+	// Use unique fileID to avoid conflicts with previous test runs
+	fileID := fmt.Sprintf("bench_query_%d", time.Now().UnixNano())
 	postgresGraph, err := BuildGraphHybridPostgres(tree, fileID, badgerPathPostgres, databaseURL, nil)
 	if err != nil {
 		b.Fatalf("Failed to build PostgreSQL graph: %v", err)
@@ -200,7 +202,8 @@ func TestHybridStorageComparison(t *testing.T) {
 
 	// Test PostgreSQL
 	badgerPathPostgres := filepath.Join(tmpDir, "postgres_graph")
-	fileID := "comparison_test_file"
+	// Use unique fileID to avoid conflicts with previous test runs
+	fileID := fmt.Sprintf("comparison_test_%d", time.Now().UnixNano())
 
 	startPostgres := time.Now()
 	postgresGraph, err := BuildGraphHybridPostgres(tree, fileID, badgerPathPostgres, databaseURL, nil)
