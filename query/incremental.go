@@ -242,6 +242,22 @@ func (g *Graph) RemoveEdgeIncremental(edgeID string) error {
 		g.removeEdgeInternal(eID)
 	}
 
+	// Clear cached parents on affected nodes
+	// This ensures getParentsFromEdges() recomputes from edges instead of using stale cache
+	// Note: Only parents are cached; children and spouses are computed on-demand
+	switch edgeType {
+	case EdgeTypeCHIL:
+		// Clearing parents cache on the child individual (FAMC edge was removed)
+		if indiNode, ok := toNode.(*IndividualNode); ok {
+			indiNode.parents = nil
+		}
+	case EdgeTypeFAMC:
+		// Clearing parents cache on the child individual (FAMC edge was removed)
+		if indiNode, ok := fromNode.(*IndividualNode); ok {
+			indiNode.parents = nil
+		}
+	}
+
 	// Handle remaining edge types that need reverse edge removal
 	switch edgeType {
 	case EdgeTypeFAMS:
