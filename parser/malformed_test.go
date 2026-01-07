@@ -372,3 +372,6 @@ func TestMalformedFiles_AllMalformedFiles(t *testing.T) {
 	t.Logf("Tested %d malformed files", fileCount)
 }
 
+
+
+

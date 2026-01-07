@@ -1,6 +1,7 @@
 package query
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/lesfleursdelanuitdev/ligneous-gedcom/types"
@@ -59,6 +60,40 @@ type Graph struct {
 
 	// Metrics collection (optional)
 	metrics *Metrics
+}
+
+// Close closes the graph and its hybrid storage (SQLite or PostgreSQL)
+func (g *Graph) Close() error {
+	var errs []error
+
+	// Close query helpers first
+	if g.queryHelpersPostgres != nil {
+		if err := g.queryHelpersPostgres.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("failed to close PostgreSQL query helpers: %w", err))
+		}
+	}
+	if g.queryHelpers != nil {
+		if err := g.queryHelpers.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("failed to close SQLite query helpers: %w", err))
+		}
+	}
+
+	// Close hybrid storage
+	if g.hybridStoragePostgres != nil {
+		if err := g.hybridStoragePostgres.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("failed to close PostgreSQL storage: %w", err))
+		}
+	}
+	if g.hybridStorage != nil {
+		if err := g.hybridStorage.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("failed to close SQLite storage: %w", err))
+		}
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("errors closing graph: %v", errs)
+	}
+	return nil
 }
 
 // NewGraph creates a new empty graph with default configuration.

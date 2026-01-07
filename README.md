@@ -19,6 +19,8 @@ ligneous-gedcom provides a comprehensive set of packages for working with GEDCOM
 - **Diff Package**: Compare two GEDCOM files and identify semantic differences with change tracking
 - **Exporter Package**: Export your GEDCOM data to multiple formats including JSON, XML, YAML, CSV, and GEDCOM for integration with other systems
 
+> **📡 REST API**: The REST API server has been moved to a separate repository: [ligneous-gedcom-api](https://github.com/lesfleursdelanuitdev/ligneous-gedcom-api). This core library focuses on GEDCOM processing functionality, while the API provides HTTP endpoints for integration.
+
 ## Quick Start
 
 **New to ligneous-gedcom? Start here:**

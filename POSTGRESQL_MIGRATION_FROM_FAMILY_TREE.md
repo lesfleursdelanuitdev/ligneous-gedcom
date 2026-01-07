@@ -944,3 +944,6 @@ LIGNEOUS_DATABASE_URL=postgresql://user:password@localhost:5432/ligneous_graphs
 
 **Final Verdict:** **Yes, we can use the same PostgreSQL server and connection pattern, but use a separate database for gedcom-go due to incompatible schemas. Use `pgx` driver for Go, not Prisma.**
 
+
+
+
